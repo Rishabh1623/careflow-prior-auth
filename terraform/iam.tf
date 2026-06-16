@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "submission" {
     sid       = "InvokeOrchestrator"
     effect    = "Allow"
     actions   = ["lambda:InvokeFunction"]
-    resources = [aws_lambda_function.orchestrator.arn]
+    resources = [aws_lambda_alias.orchestrator_live.arn]
   }
 }
 
@@ -57,6 +57,11 @@ resource "aws_iam_role" "orchestrator" {
 resource "aws_iam_role_policy_attachment" "orchestrator_basic" {
   role       = aws_iam_role.orchestrator.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "orchestrator_durable" {
+  role       = aws_iam_role.orchestrator.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicDurableExecutionRolePolicy"
 }
 
 data "aws_iam_policy_document" "orchestrator" {
@@ -124,7 +129,7 @@ data "aws_iam_policy_document" "reviewer_callback" {
       "lambda:SendDurableExecutionCallbackSuccess",
       "lambda:SendDurableExecutionCallbackFailure",
     ]
-    resources = [aws_lambda_function.orchestrator.arn]
+    resources = [aws_lambda_alias.orchestrator_live.arn]
   }
 
   statement {

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import boto3
 from anthropic import Anthropic
 
-from aws_durable_execution_sdk import (
+from aws_durable_execution_sdk_python import (
     DurableContext,
     StepContext,
     durable_execution,

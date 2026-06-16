@@ -11,7 +11,7 @@ resource "aws_lambda_function" "submission" {
   environment {
     variables = {
       DYNAMODB_TABLE             = aws_dynamodb_table.requests.name
-      ORCHESTRATOR_FUNCTION_NAME = aws_lambda_function.orchestrator.function_name
+      ORCHESTRATOR_FUNCTION_NAME = aws_lambda_alias.orchestrator_live.arn
     }
   }
 
@@ -33,6 +33,7 @@ resource "aws_lambda_function" "orchestrator" {
   source_code_hash = filebase64sha256("${path.module}/../build/orchestrator.zip")
   timeout          = 900
   memory_size      = 512
+  publish          = true
 
   environment {
     variables = {
@@ -43,7 +44,8 @@ resource "aws_lambda_function" "orchestrator" {
   }
 
   durable_config {
-    execution_timeout = "P365D"
+    execution_timeout = 2592000
+    retention_period  = 30
   }
 
   tracing_config {
@@ -52,7 +54,16 @@ resource "aws_lambda_function" "orchestrator" {
 
   tags = local.common_tags
 
-  depends_on = [aws_iam_role_policy_attachment.orchestrator_basic]
+  depends_on = [
+    aws_iam_role_policy_attachment.orchestrator_basic,
+    aws_iam_role_policy_attachment.orchestrator_durable,
+  ]
+}
+
+resource "aws_lambda_alias" "orchestrator_live" {
+  name             = "live"
+  function_name    = aws_lambda_function.orchestrator.function_name
+  function_version = aws_lambda_function.orchestrator.version
 }
 
 resource "aws_lambda_function" "reviewer_callback" {

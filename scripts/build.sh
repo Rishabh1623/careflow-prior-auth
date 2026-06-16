@@ -14,7 +14,7 @@ build_lambda() {
   tmp_dir=$(mktemp -d)
 
   echo "Building $name..."
-  pip install \
+  python3 -m pip install \
     -r "$src_dir/requirements.txt" \
     -t "$tmp_dir" \
     -q \
