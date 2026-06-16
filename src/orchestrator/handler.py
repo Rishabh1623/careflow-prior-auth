@@ -13,8 +13,22 @@ from aws_durable_execution_sdk import (
     durable_step,
 )
 
+class _JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        data = {"level": record.levelname, "message": record.getMessage()}
+        for key in ("request_id", "callback_id"):
+            val = getattr(record, key, None)
+            if val is not None:
+                data[key] = val
+        return json.dumps(data)
+
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+_h = logging.StreamHandler()
+_h.setFormatter(_JsonFormatter())
+logger.addHandler(_h)
+logger.propagate = False
 
 DYNAMODB_TABLE = os.environ.get("DYNAMODB_TABLE", "careflow-prior-auth-requests")
 SECRET_NAME = "careflow/anthropic-api-key"
@@ -46,7 +60,7 @@ def fetch_request(ctx: StepContext, request_id: str) -> dict:
     item = response.get("Item")
     if not item:
         raise ValueError(f"Request {request_id} not found in DynamoDB")
-    logger.info("Fetched request %s (status=%s)", request_id, item.get("status"))
+    logger.info("Fetched request (status=%s)", item.get("status"), extra={"request_id": request_id})
     return item
 
 
@@ -95,7 +109,10 @@ def evaluate_with_claude(ctx: StepContext, request: dict, api_key: str) -> dict:
     try:
         result = json.loads(text_content)
     except json.JSONDecodeError as exc:
-        logger.error("Claude response not valid JSON: %s", text_content)
+        logger.error(
+            "Claude response not valid JSON: %s", text_content,
+            extra={"request_id": request.get("request_id")},
+        )
         raise ValueError(f"Claude returned invalid JSON: {exc}") from exc
 
     required = {"decision", "reasoning", "confidence", "criteria_met", "criteria_failed"}
@@ -107,8 +124,9 @@ def evaluate_with_claude(ctx: StepContext, request: dict, api_key: str) -> dict:
         raise ValueError(f"Unexpected decision value: {result['decision']!r}")
 
     logger.info(
-        "Claude decision=%s confidence=%s for request %s",
-        result["decision"], result["confidence"], request.get("request_id"),
+        "Claude decision=%s confidence=%s",
+        result["decision"], result["confidence"],
+        extra={"request_id": request.get("request_id")},
     )
     return result
 
@@ -145,7 +163,7 @@ def save_decision(
             ":ua": updated_at,
         },
     )
-    logger.info("Saved decision %s for request %s", status, request_id)
+    logger.info("Saved decision %s", status, extra={"request_id": request_id})
 
 
 @durable_step
@@ -172,7 +190,7 @@ def notify_decision(
             "decision": {"DataType": "String", "StringValue": decision},
         },
     )
-    logger.info("Published decision %s to SNS for request %s", decision, request_id)
+    logger.info("Published decision %s to SNS", decision, extra={"request_id": request_id})
 
 
 @durable_step
@@ -217,7 +235,8 @@ def notify_reviewer(
         Subject=f"Prior Auth Review Required - {request_id}",
     )
     logger.info(
-        "Escalated request %s to human review (callback_id=%s)", request_id, callback_id
+        "Escalated request to human review",
+        extra={"request_id": request_id, "callback_id": callback_id},
     )
 
 
@@ -247,7 +266,7 @@ def save_review_decision(
             ":ua": updated_at,
         },
     )
-    logger.info("Saved reviewer decision %s for request %s", status, request_id)
+    logger.info("Saved reviewer decision %s", status, extra={"request_id": request_id})
 
 
 @durable_step
@@ -275,7 +294,7 @@ def notify_final_decision(
             "decision": {"DataType": "String", "StringValue": decision},
         },
     )
-    logger.info("Published final decision %s for request %s", decision, request_id)
+    logger.info("Published final decision %s", decision, extra={"request_id": request_id})
 
 
 @durable_execution
@@ -284,7 +303,7 @@ def handler(event: dict, context: DurableContext) -> dict:
     if not request_id:
         raise ValueError("event must contain 'request_id'")
 
-    logger.info("Starting orchestration for request_id=%s", request_id)
+    logger.info("Starting orchestration", extra={"request_id": request_id})
 
     request = context.step(fetch_request(request_id))
     api_key = context.step(get_api_key())
@@ -304,7 +323,7 @@ def handler(event: dict, context: DurableContext) -> dict:
             )
         )
         context.step(notify_decision(request_id, decision, claude_result["reasoning"]))
-        logger.info("Auto-decided %s for request %s", decision, request_id)
+        logger.info("Auto-decided %s", decision, extra={"request_id": request_id})
         return {
             "request_id": request_id,
             "decision": decision,
@@ -317,8 +336,8 @@ def handler(event: dict, context: DurableContext) -> dict:
     context.step(notify_reviewer(callback.callback_id, request_id, request))
 
     logger.info(
-        "Suspending orchestration for request %s (callback_id=%s)",
-        request_id, callback.callback_id,
+        "Suspending orchestration pending human review",
+        extra={"request_id": request_id, "callback_id": callback.callback_id},
     )
     reviewer_result = json.loads(callback.result())  # execution suspends here
 
@@ -326,8 +345,8 @@ def handler(event: dict, context: DurableContext) -> dict:
     context.step(notify_final_decision(request_id, reviewer_result))
 
     logger.info(
-        "Human review complete for request %s: decision=%s",
-        request_id, reviewer_result.get("decision"),
+        "Human review complete decision=%s", reviewer_result.get("decision"),
+        extra={"request_id": request_id, "callback_id": callback.callback_id},
     )
     return {
         "request_id": request_id,

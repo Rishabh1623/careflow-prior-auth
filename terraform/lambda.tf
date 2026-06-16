@@ -15,6 +15,10 @@ resource "aws_lambda_function" "submission" {
     }
   }
 
+  tracing_config {
+    mode = "Active"
+  }
+
   tags = local.common_tags
 
   depends_on = [aws_iam_role_policy_attachment.submission_basic]
@@ -42,6 +46,10 @@ resource "aws_lambda_function" "orchestrator" {
     execution_timeout = "P365D"
   }
 
+  tracing_config {
+    mode = "Active"
+  }
+
   tags = local.common_tags
 
   depends_on = [aws_iam_role_policy_attachment.orchestrator_basic]
@@ -61,6 +69,10 @@ resource "aws_lambda_function" "reviewer_callback" {
     variables = {
       DYNAMODB_TABLE = aws_dynamodb_table.requests.name
     }
+  }
+
+  tracing_config {
+    mode = "Active"
   }
 
   tags = local.common_tags
