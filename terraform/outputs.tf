@@ -1,0 +1,45 @@
+output "api_gateway_url" {
+  description = "Base URL for the CareFlow API"
+  value       = aws_apigatewayv2_stage.main.invoke_url
+}
+
+output "submit_endpoint" {
+  description = "Full URL to submit a prior authorization request"
+  value       = "${aws_apigatewayv2_stage.main.invoke_url}/submit"
+}
+
+output "submission_lambda_arn" {
+  description = "ARN of the submission Lambda"
+  value       = aws_lambda_function.submission.arn
+}
+
+output "orchestrator_lambda_arn" {
+  description = "ARN of the durable orchestrator Lambda"
+  value       = aws_lambda_function.orchestrator.arn
+}
+
+output "reviewer_callback_lambda_arn" {
+  description = "ARN of the reviewer callback Lambda"
+  value       = aws_lambda_function.reviewer_callback.arn
+}
+
+output "dynamodb_table_name" {
+  description = "Name of the DynamoDB requests table"
+  value       = aws_dynamodb_table.requests.name
+}
+
+output "reviewer_sns_topic_arn" {
+  description = "ARN of the reviewer notifications SNS topic"
+  value       = aws_sns_topic.reviewer.arn
+}
+
+output "decision_sns_topic_arn" {
+  description = "ARN of the decision notifications SNS topic"
+  value       = aws_sns_topic.decisions.arn
+}
+
+output "anthropic_secret_arn" {
+  description = "ARN of the Anthropic API key secret in Secrets Manager"
+  value       = aws_secretsmanager_secret.anthropic_api_key.arn
+  sensitive   = true
+}
