@@ -129,7 +129,9 @@ data "aws_iam_policy_document" "reviewer_callback" {
       "lambda:SendDurableExecutionCallbackSuccess",
       "lambda:SendDurableExecutionCallbackFailure",
     ]
-    resources = [aws_lambda_alias.orchestrator_live.arn]
+    resources = [
+      "arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${local.name_prefix}-orchestrator*",
+    ]
   }
 
   statement {

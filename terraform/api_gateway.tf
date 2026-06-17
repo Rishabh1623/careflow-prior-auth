@@ -75,7 +75,7 @@ resource "aws_apigatewayv2_integration" "reviewer_callback" {
 
 resource "aws_apigatewayv2_route" "reviewer_callback" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /review/{callback_id}"
+  route_key = "POST /review/{callback_id+}"
   target    = "integrations/${aws_apigatewayv2_integration.reviewer_callback.id}"
 }
 

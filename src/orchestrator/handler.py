@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 from datetime import datetime, timezone
 
 import boto3
@@ -105,6 +106,11 @@ def evaluate_with_claude(ctx: StepContext, request: dict, api_key: str) -> dict:
     )
     if not text_content:
         raise ValueError("Claude returned no text content")
+
+    # Strip markdown fences Claude sometimes adds despite prompt instructions
+    json_match = re.search(r"\{.*\}", text_content, re.DOTALL)
+    if json_match:
+        text_content = json_match.group(0)
 
     try:
         result = json.loads(text_content)
