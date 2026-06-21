@@ -49,8 +49,6 @@ def handler(event: dict, context) -> dict:
     now = datetime.now(timezone.utc).isoformat()
     ttl = int(time.time()) + TTL_DAYS * 86400
 
-    dynamodb = boto3.resource("dynamodb")
-    table = dynamodb.Table(DYNAMODB_TABLE)
     item = {
         "request_id": request_id,
         "patient_id": body["patient_id"],
@@ -59,9 +57,17 @@ def handler(event: dict, context) -> dict:
         "procedure_code": body["procedure_code"],
         "status": "PENDING",
         "created_at": now,
+        "submitted_at": now,  # GSI sort key for DecisionDateIndex
         "updated_at": now,
         "ttl": ttl,
     }
+
+    clinical_notes = body.get("clinical_notes", "")
+    if clinical_notes:
+        item["clinical_notes"] = clinical_notes
+
+    dynamodb = boto3.resource("dynamodb")
+    table = dynamodb.Table(DYNAMODB_TABLE)
 
     try:
         table.put_item(Item=item)

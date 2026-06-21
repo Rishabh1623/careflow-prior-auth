@@ -78,7 +78,8 @@ resource "aws_lambda_function" "reviewer_callback" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE = aws_dynamodb_table.requests.name
+      DYNAMODB_TABLE    = aws_dynamodb_table.requests.name
+      IDEMPOTENCY_TABLE = aws_dynamodb_table.callback_idempotency.name
     }
   }
 

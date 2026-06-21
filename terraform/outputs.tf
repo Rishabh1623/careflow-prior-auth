@@ -43,3 +43,13 @@ output "anthropic_secret_arn" {
   value       = aws_secretsmanager_secret.anthropic_api_key.arn
   sensitive   = true
 }
+
+output "decision_date_index_name" {
+  description = "Name of the GSI for querying decisions by type and date"
+  value       = "DecisionDateIndex"
+}
+
+output "callback_idempotency_table_name" {
+  description = "Name of the DynamoDB table used for callback idempotency"
+  value       = aws_dynamodb_table.callback_idempotency.name
+}

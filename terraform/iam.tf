@@ -100,6 +100,14 @@ data "aws_iam_policy_document" "orchestrator" {
       "arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${local.name_prefix}-orchestrator*",
     ]
   }
+
+  # Feature 6: Publish per-decision cost metrics to CloudWatch
+  statement {
+    sid       = "CloudWatchPutMetrics"
+    effect    = "Allow"
+    actions   = ["cloudwatch:PutMetricData"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "orchestrator" {
@@ -139,6 +147,14 @@ data "aws_iam_policy_document" "reviewer_callback" {
     effect    = "Allow"
     actions   = ["dynamodb:UpdateItem"]
     resources = [aws_dynamodb_table.requests.arn]
+  }
+
+  # Feature 4: Atomic idempotency check — claim callback_id before resolving
+  statement {
+    sid       = "IdempotencyTableWrite"
+    effect    = "Allow"
+    actions   = ["dynamodb:PutItem"]
+    resources = [aws_dynamodb_table.callback_idempotency.arn]
   }
 }
 

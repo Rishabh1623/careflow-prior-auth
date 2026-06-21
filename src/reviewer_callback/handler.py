@@ -1,6 +1,9 @@
 import base64
 import json
 import logging
+import os
+import time
+from datetime import datetime, timezone
 
 import boto3
 
@@ -8,6 +11,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 VALID_DECISIONS = {"approved", "denied"}
+IDEMPOTENCY_TABLE = os.environ.get("IDEMPOTENCY_TABLE", "careflow-callback-idempotency")
 
 
 def handler(event: dict, context) -> dict:
@@ -46,6 +50,30 @@ def handler(event: dict, context) -> dict:
 
     notes = body.get("notes", "")
     reviewer_id = body.get("reviewer_id", "unknown")
+
+    # Atomically claim the callback_id — prevents duplicate resolution under concurrent requests
+    dynamodb = boto3.resource("dynamodb")
+    idempotency_table = dynamodb.Table(IDEMPOTENCY_TABLE)
+    try:
+        idempotency_table.put_item(
+            Item={
+                "callback_id": callback_id,
+                "resolved_at": datetime.now(timezone.utc).isoformat(),
+                "decision": decision,
+                "ttl": int(time.time()) + 90 * 86400,
+            },
+            ConditionExpression="attribute_not_exists(callback_id)",
+        )
+    except dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
+        logger.warning("Duplicate callback resolution attempt for %s", callback_id)
+        return {
+            "statusCode": 409,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({
+                "error": "Callback already resolved — duplicate request ignored",
+                "callback_id": callback_id,
+            }),
+        }
 
     # Result is serialized as a JSON string — orchestrator does json.loads() on callback.result()
     result_payload = json.dumps({
