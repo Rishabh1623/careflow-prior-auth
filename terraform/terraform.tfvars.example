@@ -1,0 +1,18 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — never commit real secrets.
+
+# Required — Anthropic API key for Claude API calls
+anthropic_api_key = "sk-ant-..."
+
+# Optional — deployment environment (dev, staging, prod)
+environment = "dev"
+
+# Optional — AWS region
+aws_region = "us-east-1"
+
+# Optional — email address to receive SNS alerts
+# Subscribes to both the reviewer-notifications topic (escalation alerts)
+# and the decision-notifications topic (all final decisions).
+# AWS will send a confirmation email — you must click the link to activate.
+# Leave empty or omit to skip email subscription.
+notification_email = "you@example.com"

@@ -1,0 +1,23 @@
+# Terraform — never commit real variable values or state
+terraform/terraform.tfvars
+terraform/*.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/tfplan
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# Lambda build artifacts
+build/
+terraform.zip
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Secrets
+.env
+*.pem

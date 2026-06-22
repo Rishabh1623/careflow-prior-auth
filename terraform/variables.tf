@@ -20,3 +20,9 @@ variable "anthropic_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "notification_email" {
+  description = "Email address to subscribe to both SNS topics (reviewer alerts and decision events). Leave empty to skip email subscription."
+  type        = string
+  default     = ""
+}
