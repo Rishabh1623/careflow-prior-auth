@@ -229,7 +229,7 @@ def save_decision(
         ExpressionAttributeNames={"#s": "status"},
         ExpressionAttributeValues={
             ":status": status,
-            ":decision": decision,
+            ":decision": decision.lower(),
             ":reasoning": reasoning,
             ":confidence": str(confidence),  # str avoids DynamoDB decimal.Inexact
             ":cm": policy_criteria_met,
@@ -365,7 +365,8 @@ def save_review_decision(
         Key={"request_id": request_id},
         UpdateExpression=(
             "SET #s = :status, reviewer_decision = :decision, "
-            "reviewer_notes = :notes, reviewer_id = :rid, updated_at = :ua"
+            "reviewer_notes = :notes, reviewer_id = :rid, "
+            "final_decision = :fd, updated_at = :ua"
         ),
         ExpressionAttributeNames={"#s": "status"},
         ExpressionAttributeValues={
@@ -373,6 +374,7 @@ def save_review_decision(
             ":decision": decision,
             ":notes": reviewer_result.get("notes", ""),
             ":rid": reviewer_result.get("reviewer_id", "unknown"),
+            ":fd": status,  # "APPROVED" or "DENIED" — overwrites "ESCALATE" set by notify_reviewer
             ":ua": updated_at,
         },
     )

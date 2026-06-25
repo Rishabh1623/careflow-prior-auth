@@ -181,7 +181,7 @@ def test_save_decision_writes_claude_decision():
 
     first_call = mock_table.update_item.call_args_list[0][1]
     assert "claude_decision" in first_call["UpdateExpression"]
-    assert first_call["ExpressionAttributeValues"][":decision"] == "APPROVE"
+    assert first_call["ExpressionAttributeValues"][":decision"] == "approve"
 
 
 def test_save_decision_sets_approved_status():
@@ -197,6 +197,55 @@ def test_save_decision_sets_approved_status():
 
     first_call = mock_table.update_item.call_args_list[0][1]
     assert first_call["ExpressionAttributeValues"][":status"] == "APPROVED"
+
+
+def test_save_decision_claude_decision_is_lowercase():
+    mock_table = MagicMock()
+    mock_ddb = MagicMock()
+    mock_ddb.Table.return_value = mock_table
+
+    with patch("boto3.resource", return_value=mock_ddb), \
+         patch("boto3.client", return_value=MagicMock()):
+        orch.save_decision.__original__(
+            MagicMock(), "req-001", "DENY", "not necessary", 0.92, [], [], None, 100, 50,
+        )
+
+    first_call = mock_table.update_item.call_args_list[0][1]
+    assert first_call["ExpressionAttributeValues"][":decision"] == "deny"
+
+
+def test_save_review_decision_writes_final_decision():
+    """Regression: save_review_decision must overwrite final_decision from 'ESCALATE' to resolved status."""
+    mock_table = MagicMock()
+    mock_ddb = MagicMock()
+    mock_ddb.Table.return_value = mock_table
+
+    with patch("boto3.resource", return_value=mock_ddb):
+        orch.save_review_decision.__original__(
+            MagicMock(),
+            request_id="req-001",
+            reviewer_result={"decision": "approved", "notes": "ok", "reviewer_id": "DR-001"},
+        )
+
+    call_kw = mock_table.update_item.call_args[1]
+    assert "final_decision" in call_kw["UpdateExpression"]
+    assert call_kw["ExpressionAttributeValues"][":fd"] == "APPROVED"
+
+
+def test_save_review_decision_deny_writes_final_decision():
+    mock_table = MagicMock()
+    mock_ddb = MagicMock()
+    mock_ddb.Table.return_value = mock_table
+
+    with patch("boto3.resource", return_value=mock_ddb):
+        orch.save_review_decision.__original__(
+            MagicMock(),
+            request_id="req-001",
+            reviewer_result={"decision": "denied", "notes": "not needed", "reviewer_id": "DR-002"},
+        )
+
+    call_kw = mock_table.update_item.call_args[1]
+    assert call_kw["ExpressionAttributeValues"][":fd"] == "DENIED"
 
 
 def test_save_decision_deny_sets_denied_status():

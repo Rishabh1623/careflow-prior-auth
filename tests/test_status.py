@@ -59,6 +59,15 @@ def test_not_found_returns_404():
     assert "not found" in json.loads(resp["body"])["error"].lower()
 
 
+def test_dynamodb_error_returns_503():
+    mock_ddb = MagicMock()
+    mock_ddb.Table.return_value.get_item.side_effect = Exception("connection timeout")
+    with patch("boto3.resource", return_value=mock_ddb):
+        resp = status.handler(_event(), None)
+    assert resp["statusCode"] == 503
+    assert "error" in json.loads(resp["body"])
+
+
 def test_missing_request_id_returns_400():
     resp = status.handler({"pathParameters": None}, None)
     assert resp["statusCode"] == 400

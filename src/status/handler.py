@@ -23,9 +23,18 @@ def handler(event: dict, context) -> dict:
             "body": json.dumps({"error": "request_id path parameter is required"}),
         }
 
-    dynamodb = boto3.resource("dynamodb")
-    table = dynamodb.Table(DYNAMODB_TABLE)
-    response = table.get_item(Key={"request_id": request_id})
+    try:
+        dynamodb = boto3.resource("dynamodb")
+        table = dynamodb.Table(DYNAMODB_TABLE)
+        response = table.get_item(Key={"request_id": request_id})
+    except Exception as exc:
+        logger.error("DynamoDB error fetching request_id=%s: %s", request_id, exc)
+        return {
+            "statusCode": 503,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"error": "Service temporarily unavailable"}),
+        }
+
     item = response.get("Item")
 
     if not item:
