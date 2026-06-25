@@ -56,3 +56,4 @@ def _load(name: str, rel: str):
 _load("orchestrator_handler", "src/orchestrator/handler.py")
 _load("submission_handler", "src/submission/handler.py")
 _load("reviewer_callback_handler", "src/reviewer_callback/handler.py")
+_load("status_handler", "src/status/handler.py")

@@ -164,6 +164,34 @@ resource "aws_iam_role_policy" "reviewer_callback" {
   policy = data.aws_iam_policy_document.reviewer_callback.json
 }
 
+# ── Status Lambda ─────────────────────────────────────────────────────────────
+
+resource "aws_iam_role" "status" {
+  name               = "${local.name_prefix}-status-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+  tags               = local.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "status_basic" {
+  role       = aws_iam_role.status.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "status" {
+  statement {
+    sid       = "DynamoDBGetItem"
+    effect    = "Allow"
+    actions   = ["dynamodb:GetItem"]
+    resources = [aws_dynamodb_table.requests.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "status" {
+  name   = "${local.name_prefix}-status-policy"
+  role   = aws_iam_role.status.id
+  policy = data.aws_iam_policy_document.status.json
+}
+
 # ── Secrets Manager — Anthropic API Key ───────────────────────────────────────
 
 resource "aws_secretsmanager_secret" "anthropic_api_key" {

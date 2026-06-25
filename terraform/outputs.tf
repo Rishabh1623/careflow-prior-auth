@@ -8,6 +8,16 @@ output "submit_endpoint" {
   value       = "${aws_apigatewayv2_stage.main.invoke_url}/submit"
 }
 
+output "status_endpoint" {
+  description = "Full URL to check prior authorization request status"
+  value       = "${aws_apigatewayv2_stage.main.invoke_url}/status/{request_id}"
+}
+
+output "status_lambda_arn" {
+  description = "ARN of the status Lambda"
+  value       = aws_lambda_function.status.arn
+}
+
 output "submission_lambda_arn" {
   description = "ARN of the submission Lambda"
   value       = aws_lambda_function.submission.arn

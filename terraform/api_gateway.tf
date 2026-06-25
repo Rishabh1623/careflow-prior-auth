@@ -64,6 +64,29 @@ resource "aws_lambda_permission" "submission_apigw" {
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }
 
+# ── GET /status/{request_id} — Status Lambda ──────────────────────────────────
+
+resource "aws_apigatewayv2_integration" "status" {
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.status.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "status" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /status/{request_id}"
+  target    = "integrations/${aws_apigatewayv2_integration.status.id}"
+}
+
+resource "aws_lambda_permission" "status_apigw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.status.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
 # ── POST /review/{callback_id} — Reviewer Callback Lambda ─────────────────────
 
 resource "aws_apigatewayv2_integration" "reviewer_callback" {

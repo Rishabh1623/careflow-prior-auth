@@ -92,7 +92,39 @@ resource "aws_lambda_function" "reviewer_callback" {
   depends_on = [aws_iam_role_policy_attachment.reviewer_callback_basic]
 }
 
+# ── Status Lambda ─────────────────────────────────────────────────────────────
+
+resource "aws_lambda_function" "status" {
+  function_name    = "${local.name_prefix}-status"
+  runtime          = "python3.13"
+  handler          = "handler.handler"
+  role             = aws_iam_role.status.arn
+  filename         = "${path.module}/../build/status.zip"
+  source_code_hash = filebase64sha256("${path.module}/../build/status.zip")
+  timeout          = 10
+  memory_size      = 128
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE = aws_dynamodb_table.requests.name
+    }
+  }
+
+  tracing_config {
+    mode = "Active"
+  }
+
+  tags       = local.common_tags
+  depends_on = [aws_iam_role_policy_attachment.status_basic]
+}
+
 # CloudWatch Log Groups with explicit retention
+resource "aws_cloudwatch_log_group" "status" {
+  name              = "/aws/lambda/${local.name_prefix}-status"
+  retention_in_days = 14
+  tags              = local.common_tags
+}
+
 resource "aws_cloudwatch_log_group" "submission" {
   name              = "/aws/lambda/${local.name_prefix}-submission"
   retention_in_days = 14

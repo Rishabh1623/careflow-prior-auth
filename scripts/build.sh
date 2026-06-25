@@ -31,6 +31,7 @@ build_lambda() {
 build_lambda "submission"
 build_lambda "reviewer_callback"
 build_lambda "orchestrator"
+build_lambda "status"
 
 echo ""
 echo "All Lambda packages built in $BUILD_DIR/"
