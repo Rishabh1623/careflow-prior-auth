@@ -114,6 +114,39 @@ Submit a prior authorization request for evaluation.
 
 ---
 
+### `GET /status/{request_id}`
+
+Check the status of a prior authorization request. Returns only status and AI decision metadata — no clinical detail or PII.
+
+**Response `200`:**
+```json
+{
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "APPROVED",
+  "ai_decision": "approve",
+  "ai_confidence": "0.95",
+  "submitted_at": "2026-06-25T00:27:36+00:00",
+  "resolved_at": "2026-06-25T00:30:12+00:00"
+}
+```
+
+Fields returned when present:
+
+| Field | When present |
+|---|---|
+| `request_id` | Always |
+| `status` | Always (`PENDING` / `APPROVED` / `DENIED` / `UNDER_REVIEW`) |
+| `ai_decision` | After Claude evaluation (`approve` / `deny` / `escalate`) |
+| `ai_confidence` | After Claude evaluation |
+| `submitted_at` | Always |
+| `resolved_at` | Only when `status` is `APPROVED` or `DENIED` |
+| `human_reviewer` | Only when resolved by a human reviewer |
+
+**Error `404`:** `request_id` not found.  
+**Error `400`:** `request_id` path parameter missing.
+
+---
+
 ### `POST /review/{callback_id}`
 
 Submit a human reviewer decision for an escalated request. `callback_id` is retrieved from DynamoDB or the SNS reviewer notification.
@@ -181,10 +214,8 @@ echo "Request ID: $REQUEST_ID"
 # Wait for Claude evaluation (~10-20 seconds)
 sleep 20
 
-aws dynamodb get-item \
-  --table-name careflow-prior-auth-requests \
-  --key "{\"request_id\":{\"S\":\"$REQUEST_ID\"}}" \
-  --query 'Item.{status:status.S,decision:claude_decision.S,confidence:claude_confidence.S}'
+# Check status via API
+curl -s "$API_URL/status/$REQUEST_ID" | python3 -m json.tool
 ```
 
 ### Test — Escalation + Human Review
@@ -214,11 +245,8 @@ curl -s -X POST "$API_URL/review/$CALLBACK_ID" \
 
 sleep 10
 
-# Verify final state
-aws dynamodb get-item \
-  --table-name careflow-prior-auth-requests \
-  --key "{\"request_id\":{\"S\":\"$ESC_ID\"}}" \
-  --query 'Item.{status:status.S,reviewer_decision:reviewer_decision.S,reviewer_id:reviewer_id.S}'
+# Verify final state via API
+curl -s "$API_URL/status/$ESC_ID" | python3 -m json.tool
 ```
 
 ---
@@ -237,8 +265,11 @@ careflow-prior-auth/
 │   ├── submission/
 │   │   ├── handler.py                 # Standard Lambda — API Gateway entry point
 │   │   └── requirements.txt
-│   └── reviewer_callback/
-│       ├── handler.py                 # Standard Lambda — resolves durable callback
+│   ├── reviewer_callback/
+│   │   ├── handler.py                 # Standard Lambda — resolves durable callback
+│   │   └── requirements.txt
+│   └── status/
+│       ├── handler.py                 # Standard Lambda — GET /status/{request_id}
 │       └── requirements.txt
 └── terraform/
     ├── main.tf                        # Provider, backend, locals
@@ -246,7 +277,7 @@ careflow-prior-auth/
     ├── outputs.tf                     # API URL, Lambda ARNs, SNS ARNs
     ├── dynamodb.tf                    # PAY_PER_REQUEST table with TTL
     ├── sns.tf                         # Reviewer + decisions topics
-    ├── lambda.tf                      # 3 Lambdas, orchestrator has durable_config
+    ├── lambda.tf                      # 4 Lambdas, orchestrator has durable_config
     ├── iam.tf                         # Least-privilege roles + Secrets Manager secret
     └── api_gateway.tf                 # HTTP API v2, routes, integrations
 ```
