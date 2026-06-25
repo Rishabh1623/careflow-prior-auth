@@ -315,11 +315,12 @@ def notify_reviewer(
     table = dynamodb.Table(DYNAMODB_TABLE)
     table.update_item(
         Key={"request_id": request_id},
-        UpdateExpression="SET #s = :status, callback_id = :cb, final_decision = :fd, updated_at = :ua",
+        UpdateExpression="SET #s = :status, callback_id = :cb, claude_decision = :cd, final_decision = :fd, updated_at = :ua",
         ExpressionAttributeNames={"#s": "status"},
         ExpressionAttributeValues={
             ":status": "UNDER_REVIEW",
             ":cb": callback_id,
+            ":cd": "escalate",
             ":fd": "ESCALATE",  # DecisionDateIndex GSI attribute
             ":ua": updated_at,
         },
