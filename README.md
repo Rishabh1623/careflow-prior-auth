@@ -9,6 +9,7 @@ sequenceDiagram
     participant Client
     participant APIGW as API Gateway (HTTP v2)
     participant Sub as Submission Lambda
+    participant Stat as Status Lambda
     participant DDB as DynamoDB
     participant Orch as Orchestrator Lambda (Durable)
     participant SM as Secrets Manager
@@ -23,6 +24,11 @@ sequenceDiagram
     Sub->>DDB: PutItem (status=PENDING, ttl=now+90d)
     Sub->>Orch: InvokeFunction (InvocationType=Event)
     Sub-->>Client: 202 { request_id, status }
+
+    Client->>APIGW: GET /status/{request_id}
+    APIGW->>Stat: Proxy event
+    Stat->>DDB: GetItem (request_id)
+    Stat-->>Client: 200 { request_id, status, ai_decision, … }
 
     Note over Orch: Durable execution — each step checkpointed
     Orch->>DDB: GetItem (fetch_request step)
