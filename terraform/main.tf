@@ -8,9 +8,10 @@ terraform {
     }
   }
 
+  # Partial backend config — key is supplied per environment:
+  #   terraform init -backend-config=backends/<env>.hcl
   backend "s3" {
     bucket = "careflow-terraform-state"
-    key    = "careflow-prior-auth/terraform.tfstate"
     region = "us-east-1"
   }
 }

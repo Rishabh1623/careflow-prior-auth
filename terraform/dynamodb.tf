@@ -1,7 +1,8 @@
 resource "aws_dynamodb_table" "requests" {
-  name         = "careflow-prior-auth-requests"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "request_id"
+  name                        = "${local.name_prefix}-prior-auth-requests"
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "request_id"
+  deletion_protection_enabled = true
 
   attribute {
     name = "request_id"
@@ -32,15 +33,16 @@ resource "aws_dynamodb_table" "requests" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "careflow-prior-auth-requests"
+    Name = "${local.name_prefix}-prior-auth-requests"
   })
 }
 
 # Feature 4: Callback idempotency table — prevents duplicate callback resolution
 resource "aws_dynamodb_table" "callback_idempotency" {
-  name         = "careflow-callback-idempotency"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "callback_id"
+  name                        = "${local.name_prefix}-callback-idempotency"
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "callback_id"
+  deletion_protection_enabled = true
 
   attribute {
     name = "callback_id"
@@ -53,6 +55,6 @@ resource "aws_dynamodb_table" "callback_idempotency" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "careflow-callback-idempotency"
+    Name = "${local.name_prefix}-callback-idempotency"
   })
 }

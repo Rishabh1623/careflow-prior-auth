@@ -87,7 +87,7 @@ data "aws_iam_policy_document" "orchestrator" {
     effect  = "Allow"
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
-      "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:careflow/anthropic-api-key*",
+      "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:careflow/${var.environment}/anthropic-api-key*",
     ]
   }
 
@@ -195,7 +195,7 @@ resource "aws_iam_role_policy" "status" {
 # ── Secrets Manager — Anthropic API Key ───────────────────────────────────────
 
 resource "aws_secretsmanager_secret" "anthropic_api_key" {
-  name        = "careflow/anthropic-api-key"
+  name        = "careflow/${var.environment}/anthropic-api-key"
   description = "Anthropic API key for CareFlow orchestrator Lambda"
   tags        = local.common_tags
 }

@@ -133,9 +133,9 @@ def handler(event: dict, context: DurableContext) -> dict:
 # Build Lambda zip packages
 ./scripts/build.sh
 
-# Deploy infrastructure
+# Deploy infrastructure (supply per-environment backend config at init time)
 cd terraform
-terraform init
+terraform init -backend-config=backends/<env>.hcl   # e.g. backends/dev.hcl
 terraform plan -var="anthropic_api_key=sk-ant-..." -out=tfplan
 terraform apply tfplan
 
