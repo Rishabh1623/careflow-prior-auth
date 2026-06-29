@@ -21,7 +21,10 @@ resource "aws_lambda_function" "submission" {
 
   tags = local.common_tags
 
-  depends_on = [aws_iam_role_policy_attachment.submission_basic]
+  depends_on = [
+    aws_iam_role_policy_attachment.submission_basic,
+    aws_iam_role_policy.submission,
+  ]
 }
 
 resource "aws_lambda_function" "orchestrator" {
@@ -57,6 +60,7 @@ resource "aws_lambda_function" "orchestrator" {
   depends_on = [
     aws_iam_role_policy_attachment.orchestrator_basic,
     aws_iam_role_policy_attachment.orchestrator_durable,
+    aws_iam_role_policy.orchestrator,
   ]
 }
 
@@ -89,7 +93,10 @@ resource "aws_lambda_function" "reviewer_callback" {
 
   tags = local.common_tags
 
-  depends_on = [aws_iam_role_policy_attachment.reviewer_callback_basic]
+  depends_on = [
+    aws_iam_role_policy_attachment.reviewer_callback_basic,
+    aws_iam_role_policy.reviewer_callback,
+  ]
 }
 
 # ── Status Lambda ─────────────────────────────────────────────────────────────
@@ -115,7 +122,10 @@ resource "aws_lambda_function" "status" {
   }
 
   tags       = local.common_tags
-  depends_on = [aws_iam_role_policy_attachment.status_basic]
+  depends_on = [
+    aws_iam_role_policy_attachment.status_basic,
+    aws_iam_role_policy.status,
+  ]
 }
 
 # CloudWatch Log Groups with explicit retention
