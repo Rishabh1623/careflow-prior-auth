@@ -147,6 +147,7 @@ def handler(event: dict, context: DurableContext) -> dict:
 | orchestrator | `API_GATEWAY_URL` | from Terraform output (optional, for review_url in SNS message) |
 | reviewer_callback | `DYNAMODB_TABLE` | `careflow-prior-auth-requests` |
 | reviewer_callback | `IDEMPOTENCY_TABLE` | `careflow-{env}-callback-idempotency` |
+| status | `DYNAMODB_TABLE` | `careflow-prior-auth-requests` |
 
 ## Build & Deploy
 
