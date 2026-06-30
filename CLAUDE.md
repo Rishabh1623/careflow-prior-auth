@@ -174,7 +174,10 @@ curl -X POST "$API_URL/submit" \
   -H "Content-Type: application/json" \
   -d '{"patient_id":"PAT-001","provider_id":"PROV-001","diagnosis_code":"J18.9","procedure_code":"99233"}'
 
-# Check status (after ~20s)
+# Check status via API (after ~20s)
+curl "$API_URL/status/<request_id>"
+
+# Check status directly in DynamoDB
 aws dynamodb get-item --table-name careflow-prior-auth-requests \
   --key '{"request_id":{"S":"<request_id>"}}'
 
