@@ -195,13 +195,22 @@
       </mxGeometry>
     </mxCell>
 
-    <mxCell id="edge-reviewer-cb-idempotency" value="idempotency check" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#ED7100;fontColor=#ED7100;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="lambda-reviewer-cb" target="dynamo-idempotency" parent="1">
+    <mxCell id="edge-reviewer-cb-idempotency" value="PutItem (atomic claim)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#ED7100;fontColor=#ED7100;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="lambda-reviewer-cb" target="dynamo-idempotency" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
     <mxCell id="edge-reviewer-cb-orchestrator" value="send_callback (RESUME &#x25B6;)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#1a8c1a;fontColor=#1a8c1a;strokeWidth=2;rounded=0;fontFamily=Helvetica;fontSize=10;fontStyle=1;" edge="1" source="lambda-reviewer-cb" target="lambda-orchestrator" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
 
+    <!-- save_review_decision: post-resume write back to requests table -->
+    <mxCell id="edge-orchestrator-dynamo-review-decision" value="UpdateItem (APPROVED/DENIED) [post-review]" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#1a8c1a;fontColor=#1a8c1a;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" edge="1" source="lambda-orchestrator" target="dynamo-requests" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="920" y="466" />
+          <mxPoint x="920" y="356" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
     <mxCell id="edge-orchestrator-sns-decisions-resume" value="notify_final_decision (post-resume)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#1a8c1a;fontColor=#1a8c1a;rounded=0;fontFamily=Helvetica;fontSize=10;" edge="1" source="lambda-orchestrator" target="sns-decisions" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
