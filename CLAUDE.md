@@ -13,6 +13,7 @@ by AI or escalated to a human reviewer at zero compute cost while suspended.
 | Submission Lambda | Python 3.13, boto3 | API entry point, request persistence |
 | Orchestrator Lambda | Python 3.13, Durable SDK, Anthropic | Stateful workflow, Claude evaluation |
 | Reviewer Callback Lambda | Python 3.13, boto3 | Human review resolution |
+| Status Lambda | Python 3.13, boto3 | GET /status/{request_id} — DynamoDB read-through |
 | DynamoDB | `careflow-prior-auth-requests` | Request state with 90-day TTL |
 | DynamoDB | `careflow-{env}-callback-idempotency` | Prevents duplicate callback resolution, 90-day TTL |
 | SNS (reviewer) | `careflow-{env}-reviewer-notifications` | Human review alerts |
