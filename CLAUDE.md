@@ -14,9 +14,11 @@ by AI or escalated to a human reviewer at zero compute cost while suspended.
 | Orchestrator Lambda | Python 3.13, Durable SDK, Anthropic | Stateful workflow, Claude evaluation |
 | Reviewer Callback Lambda | Python 3.13, boto3 | Human review resolution |
 | DynamoDB | `careflow-prior-auth-requests` | Request state with 90-day TTL |
+| DynamoDB | `careflow-{env}-callback-idempotency` | Prevents duplicate callback resolution, 90-day TTL |
 | SNS (reviewer) | `careflow-{env}-reviewer-notifications` | Human review alerts |
 | SNS (decisions) | `careflow-{env}-decision-notifications` | Final decision event bus |
 | Secrets Manager | `careflow/anthropic-api-key` | Anthropic API key |
+| CloudWatch | `CareFlow` namespace, `CareFlowTokenCost` metric | Token cost tracking per decision |
 | API Gateway | HTTP API v2 | Public REST endpoints |
 
 ## Stack
@@ -43,7 +45,7 @@ Orchestrator (durable — checkpointed steps):
   3. evaluate_with_claude(request)     — Claude API
 
   if decision ∈ {approve, deny}:
-    4. save_decision(...)              — DynamoDB UpdateItem (APPROVED|DENIED)
+    4. save_decision(...)              — DynamoDB UpdateItem (APPROVED|DENIED) + CloudWatch PutMetricData
     5. notify_decision(...)            — SNS decisions topic
     → DONE
 
@@ -54,6 +56,7 @@ Orchestrator (durable — checkpointed steps):
 
     [Human POSTs to POST /review/{callback_id}]
     → Reviewer Callback Lambda
+        → DynamoDB PutItem callback-idempotency (atomic claim, prevents duplicates)
         → send_durable_execution_callback_success(CallbackId, Result)
     → Orchestrator RESUMES
 
@@ -64,8 +67,9 @@ Orchestrator (durable — checkpointed steps):
 
 ## DynamoDB Schema
 
-Table: `careflow-prior-auth-requests`  
-PK: `request_id` (String, UUID v4)
+### Table: `careflow-prior-auth-requests`
+PK: `request_id` (String, UUID v4)  
+GSI: `DecisionDateIndex` — PK `final_decision`, SK `submitted_at`
 
 | Attribute | Type | Notes |
 |---|---|---|
@@ -87,6 +91,21 @@ PK: `request_id` (String, UUID v4)
 | reviewer_decision | S | approved / denied (set after human review) |
 | reviewer_notes | S | |
 | reviewer_id | S | |
+| final_decision | S | APPROVE / DENY / ESCALATE / APPROVED / DENIED — GSI hash key |
+| submitted_at | S | ISO 8601 UTC — GSI range key (same as created_at) |
+| estimated_cost_usd | S | Stored as string (avoids decimal.Inexact) |
+| input_tokens | N | Claude input token count |
+| output_tokens | N | Claude output token count |
+
+### Table: `careflow-{env}-callback-idempotency`
+PK: `callback_id` (String)
+
+| Attribute | Type | Notes |
+|---|---|---|
+| callback_id | S | Durable SDK callback ID |
+| resolved_at | S | ISO 8601 UTC |
+| decision | S | approved / denied |
+| ttl | N | Unix epoch seconds (90 days) |
 
 ## Durable SDK — Mandatory Rules
 
@@ -126,6 +145,7 @@ def handler(event: dict, context: DurableContext) -> dict:
 | orchestrator | `DECISION_SNS_TOPIC_ARN` | from Terraform output |
 | orchestrator | `API_GATEWAY_URL` | from Terraform output (optional, for review_url in SNS message) |
 | reviewer_callback | `DYNAMODB_TABLE` | `careflow-prior-auth-requests` |
+| reviewer_callback | `IDEMPOTENCY_TABLE` | `careflow-{env}-callback-idempotency` |
 
 ## Build & Deploy
 
