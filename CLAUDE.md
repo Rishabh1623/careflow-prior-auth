@@ -43,17 +43,19 @@ POST /submit
 Orchestrator (durable — checkpointed steps):
   1. fetch_request(request_id)         — DynamoDB GetItem
   2. get_api_key()                     — Secrets Manager
-  3. evaluate_with_claude(request)     — Claude API
+  3. [if clinical_notes] check_prompt_injection(notes, api_key) — Claude API (5-token classifier)
+     → if injection detected: skip to escalate path immediately
+  4. evaluate_with_claude(request)     — Claude API (main prior auth decision)
 
   if decision ∈ {approve, deny}:
-    4. save_decision(...)              — DynamoDB UpdateItem (APPROVED|DENIED) + CloudWatch PutMetricData
-    5. notify_decision(...)            — SNS decisions topic
+    5. save_decision(...)              — DynamoDB UpdateItem (APPROVED|DENIED) + CloudWatch PutMetricData
+    6. notify_decision(...)            — SNS decisions topic
     → DONE
 
   if decision == escalate:
-    4. callback = create_callback("human-review")
-    5. notify_reviewer(callback_id, ...) — DynamoDB (UNDER_REVIEW) + SNS reviewer topic
-    6. callback.result()               — SUSPEND (zero compute cost)
+    5. callback = create_callback("human-review")
+    6. notify_reviewer(callback_id, ...) — DynamoDB (UNDER_REVIEW) + SNS reviewer topic
+    7. callback.result()               — SUSPEND (zero compute cost)
 
     [Human POSTs to POST /review/{callback_id}]
     → Reviewer Callback Lambda
@@ -61,8 +63,8 @@ Orchestrator (durable — checkpointed steps):
         → send_durable_execution_callback_success(CallbackId, Result)
     → Orchestrator RESUMES
 
-    7. save_review_decision(...)       — DynamoDB UpdateItem (APPROVED|DENIED + reviewer fields)
-    8. notify_final_decision(...)      — SNS decisions topic
+    8. save_review_decision(...)       — DynamoDB UpdateItem (APPROVED|DENIED + reviewer fields)
+    9. notify_final_decision(...)      — SNS decisions topic
     → DONE
 ```
 
@@ -86,8 +88,9 @@ GSI: `DecisionDateIndex` — PK `final_decision`, SK `submitted_at`
 | claude_decision | S | approve / deny / escalate |
 | claude_reasoning | S | Claude explanation |
 | claude_confidence | S | Stored as string (avoids decimal.Inexact) |
-| criteria_met | L | List of strings |
-| criteria_failed | L | List of strings |
+| policy_criteria_met | L | Clinical criteria supporting approval |
+| missing_information | L | Missing/insufficient clinical details |
+| clinical_notes | S | Optional; set on submission if provided |
 | callback_id | S | Set when escalated |
 | reviewer_decision | S | approved / denied (set after human review) |
 | reviewer_notes | S | |
@@ -142,6 +145,7 @@ def handler(event: dict, context: DurableContext) -> dict:
 | submission | `DYNAMODB_TABLE` | `careflow-prior-auth-requests` |
 | submission | `ORCHESTRATOR_FUNCTION_NAME` | `careflow-{env}-orchestrator` |
 | orchestrator | `DYNAMODB_TABLE` | `careflow-prior-auth-requests` |
+| orchestrator | `ANTHROPIC_SECRET_ARN` | ARN of `careflow/anthropic-api-key` secret |
 | orchestrator | `REVIEWER_SNS_TOPIC_ARN` | from Terraform output |
 | orchestrator | `DECISION_SNS_TOPIC_ARN` | from Terraform output |
 | orchestrator | `API_GATEWAY_URL` | from Terraform output (optional, for review_url in SNS message) |
