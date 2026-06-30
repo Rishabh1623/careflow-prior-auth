@@ -35,7 +35,7 @@ logger.addHandler(_h)
 logger.propagate = False
 
 DYNAMODB_TABLE = os.environ.get("DYNAMODB_TABLE", "careflow-prior-auth-requests")
-SECRET_NAME = "careflow/anthropic-api-key"
+SECRET_NAME = os.environ.get("ANTHROPIC_SECRET_ARN", "careflow/anthropic-api-key")
 MODEL_ID = "claude-sonnet-4-6"
 CONFIDENCE_THRESHOLD = 0.90
 

@@ -43,6 +43,7 @@ resource "aws_lambda_function" "orchestrator" {
       DYNAMODB_TABLE         = aws_dynamodb_table.requests.name
       REVIEWER_SNS_TOPIC_ARN = aws_sns_topic.reviewer.arn
       DECISION_SNS_TOPIC_ARN = aws_sns_topic.decisions.arn
+      ANTHROPIC_SECRET_ARN   = aws_secretsmanager_secret.anthropic_api_key.arn
     }
   }
 
