@@ -117,10 +117,33 @@
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
 
-    <mxCell id="edge-orchestrator-claude" value="evaluate request" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#00A4A6;fontColor=#00A4A6;rounded=0;fontFamily=Helvetica;fontSize=10;" edge="1" source="lambda-orchestrator" target="claude-api-bg" parent="1">
+    <!-- Step ①: check_prompt_injection — routed above main eval arrow -->
+    <mxCell id="edge-orchestrator-claude-injection" value="① check_prompt_injection (if clinical_notes)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#00A4A6;fontColor=#00A4A6;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="lambda-orchestrator" target="claude-api-bg" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="770" y="248" />
+          <mxPoint x="1548" y="248" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <!-- Injection result return — short path back from top of Claude box -->
+    <mxCell id="edge-injection-return" value="safe / injection_detected" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#00A4A6;fontColor=#00A4A6;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" source="claude-api-bg" target="lambda-orchestrator" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1498" y="218" />
+          <mxPoint x="828" y="218" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <!-- Injection detected bypass badge -->
+    <mxCell id="injection-bypass-badge" value="⚠ injection detected → skip to escalate (bypasses ②)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CC0000;strokeColor=none;fontColor=#ffffff;fontSize=10;fontStyle=1;fontFamily=Helvetica;arcSize=40;" vertex="1" parent="1">
+      <mxGeometry x="984" y="200" width="330" height="28" as="geometry" />
+    </mxCell>
+    <!-- Step ②: main Claude evaluation -->
+    <mxCell id="edge-orchestrator-claude" value="② evaluate_with_claude (main decision)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#00A4A6;fontColor=#00A4A6;rounded=0;fontFamily=Helvetica;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="lambda-orchestrator" target="claude-api-bg" parent="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <mxCell id="edge-claude-orchestrator" value="approve / deny / escalate" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#00A4A6;fontColor=#00A4A6;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="claude-api-bg" target="lambda-orchestrator" parent="1">
+    <mxCell id="edge-claude-orchestrator" value="APPROVE / DENY / ESCALATE" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#00A4A6;fontColor=#00A4A6;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="claude-api-bg" target="lambda-orchestrator" parent="1">
       <mxGeometry relative="1" as="geometry">
         <Array as="points">
           <mxPoint x="1420" y="363" />
@@ -205,11 +228,6 @@
     </mxCell>
     <mxCell id="edge-orchestrator-cloudwatch" value="PutMetricData (token cost)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;startArrow=none;strokeColor=#545B64;fontColor=#545B64;rounded=0;dashed=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="lambda-orchestrator" target="cloudwatch" parent="1">
       <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-
-    <!-- Prompt injection annotation: Claude is called twice -->
-    <mxCell id="prompt-injection-note" value="&lt;b&gt;Claude called twice per escalation path:&lt;/b&gt;&lt;br&gt;① check_prompt_injection (clinical_notes scan)&lt;br&gt;② evaluate_with_claude (main prior auth decision)" style="text;html=1;strokeColor=#00A4A6;fillColor=light-dark(#E0F7F8,#003033);fillStyle=auto;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;fontFamily=Helvetica;fontColor=light-dark(#004B50,#E0F7F8);arcSize=15;spacingLeft=6;" vertex="1" parent="1">
-      <mxGeometry x="1390" y="450" width="258" height="58" as="geometry" />
     </mxCell>
 
     <mxCell id="legend-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#EDF3FF,#305363);fillStyle=auto;strokeColor=#545B64;arcSize=4;" vertex="1" parent="1">
