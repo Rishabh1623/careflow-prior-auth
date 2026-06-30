@@ -137,12 +137,19 @@ sequenceDiagram
     Note over Orch: Durable execution — each step checkpointed
     Orch->>DDB: GetItem (fetch_request step)
     Orch->>SM: GetSecretValue (get_api_key step)
-    Orch->>Claude: messages.create — prompt injection screen (if clinical_notes)
-    Claude-->>Orch: safe / injection_detected
-    Orch->>Claude: messages.create — temperature=0, prior auth evaluation
-    Claude-->>Orch: { decision, reasoning, confidence, policy_criteria_met, missing_information }
+    alt clinical_notes present
+        Orch->>Claude: messages.create — prompt injection screen (5-token classifier)
+        Claude-->>Orch: safe / injection_detected
+    end
 
-    alt decision == "APPROVE" or "DENY" (confidence ≥ 90%)
+    alt injection_detected
+        Note over Orch: skip evaluate_with_claude — go straight to escalation
+    else
+        Orch->>Claude: messages.create — temperature=0, prior auth evaluation
+        Claude-->>Orch: { decision, reasoning, confidence, policy_criteria_met, missing_information }
+    end
+
+    alt decision == "APPROVE" or "DENY" (confidence ≥ 90%) and not injection_detected
         Orch->>DDB: UpdateItem status=APPROVED|DENIED + cost metrics (save_decision step)
         Orch->>SNS_D: Publish decided_by=claude_ai (notify_decision step)
     else decision == "ESCALATE" (or confidence < 90%)
@@ -182,7 +189,7 @@ sequenceDiagram
 | Compute cost during wait | **Zero** — Lambda exits while suspended | Standard Workflows bill per state transition + duration |
 | Developer experience | All orchestration logic in one Python file | Separate state machine definition file |
 | Debugging | Single Lambda log group per execution | Visual console but separate execution model |
-| Execution duration | Up to 1 year | Up to 1 year (Standard) |
+| Execution duration | Configurable; **30 days** in this project (`execution_timeout=2592000`) | Up to 1 year (Standard) |
 
 **Chosen: Lambda Durable Functions.** The suspended orchestrator costs nothing while waiting for a human reviewer — which could be hours or days. Step Functions would bill for that entire wait. For a workflow where human review is a core path, not an edge case, the cost difference is meaningful. The Python control flow also keeps all business logic in one file: no workflow DSL to learn or maintain separately.
 
@@ -349,6 +356,7 @@ Expected result:
 {
   "request_id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "APPROVED",
+  "final_decision": "APPROVE",
   "ai_decision": "approve",
   "ai_confidence": "0.97",
   "submitted_at": "2026-06-25T00:27:36+00:00",
@@ -392,6 +400,7 @@ Expected result:
 {
   "request_id": "661f9511-f30c-52e5-b827-557766551111",
   "status": "APPROVED",
+  "final_decision": "APPROVED",
   "ai_decision": "escalate",
   "submitted_at": "2026-06-25T00:31:10+00:00",
   "resolved_at": "2026-06-25T00:34:22+00:00",
