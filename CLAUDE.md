@@ -10,7 +10,7 @@ by AI or escalated to a human reviewer at zero compute cost while suspended.
 
 | Component | Technology | Purpose |
 |---|---|---|
-| Submission Lambda | Python 3.13, boto3 | API entry point, request persistence |
+| Submission Lambda | Python 3.13, boto3 | API entry point, request persistence; accepts raw JSON or FHIR `CoverageEligibilityRequest` |
 | Orchestrator Lambda | Python 3.13, Durable SDK, Anthropic | Stateful workflow, Claude evaluation |
 | Reviewer Callback Lambda | Python 3.13, boto3 | Human review resolution |
 | Status Lambda | Python 3.13, boto3 | GET /status/{request_id} — DynamoDB read-through |
@@ -34,8 +34,9 @@ by AI or escalated to a human reviewer at zero compute cost while suspended.
 ## Orchestration Flow
 
 ```
-POST /submit
+POST /submit  (raw JSON or FHIR CoverageEligibilityRequest)
   → Submission Lambda
+      → [if FHIR] _parse_fhir() maps CoverageEligibilityRequest → internal format
       → DynamoDB PutItem (status=PENDING, ttl=now+90d)
       → invoke Orchestrator async (InvocationType=Event)
       → 202 { request_id }
