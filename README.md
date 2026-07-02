@@ -42,6 +42,7 @@ A full evaluation — fetch, screen, evaluate, record — costs **$0.008865** in
 - Confidence threshold enforced in code — below 90% → escalate, no exceptions
 - Claude response validated against Pydantic schema before any action; parse failure → escalate
 - IAM least privilege — each Lambda has its own role scoped to exactly its resources
+- DynamoDB requests table encrypted with a customer-managed KMS key (rotation enabled); callback-idempotency table uses AWS-managed encryption (no PHI)
 
 ## Engineering Decisions
 
