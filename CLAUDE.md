@@ -73,7 +73,8 @@ Orchestrator (durable — checkpointed steps):
 
 ### Table: `careflow-prior-auth-requests`
 PK: `request_id` (String, UUID v4)  
-GSI: `DecisionDateIndex` — PK `final_decision`, SK `submitted_at`
+GSI: `DecisionDateIndex` — PK `final_decision`, SK `submitted_at`  
+Encryption: customer-managed KMS key (`alias/careflow-{env}-dynamodb`), key rotation enabled
 
 | Attribute | Type | Notes |
 |---|---|---|
@@ -103,7 +104,8 @@ GSI: `DecisionDateIndex` — PK `final_decision`, SK `submitted_at`
 | output_tokens | N | Claude output token count |
 
 ### Table: `careflow-{env}-callback-idempotency`
-PK: `callback_id` (String)
+PK: `callback_id` (String)  
+Encryption: AWS-managed (no PHI stored)
 
 | Attribute | Type | Notes |
 |---|---|---|
