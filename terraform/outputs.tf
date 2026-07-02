@@ -64,6 +64,11 @@ output "callback_idempotency_table_name" {
   value       = aws_dynamodb_table.callback_idempotency.name
 }
 
+output "dynamodb_kms_key_arn" {
+  description = "ARN of the KMS key used to encrypt the DynamoDB requests table"
+  value       = aws_kms_key.dynamodb.arn
+}
+
 output "environment" {
   description = "Deployment environment"
   value       = var.environment

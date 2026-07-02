@@ -38,6 +38,13 @@ data "aws_iam_policy_document" "submission" {
     actions   = ["lambda:InvokeFunction"]
     resources = [aws_lambda_alias.orchestrator_live.arn]
   }
+
+  statement {
+    sid       = "KMSDynamoDB"
+    effect    = "Allow"
+    actions   = ["kms:GenerateDataKey", "kms:Decrypt"]
+    resources = [aws_kms_key.dynamodb.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "submission" {
@@ -108,6 +115,13 @@ data "aws_iam_policy_document" "orchestrator" {
     actions   = ["cloudwatch:PutMetricData"]
     resources = ["*"]
   }
+
+  statement {
+    sid       = "KMSDynamoDB"
+    effect    = "Allow"
+    actions   = ["kms:GenerateDataKey", "kms:Decrypt"]
+    resources = [aws_kms_key.dynamodb.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "orchestrator" {
@@ -156,6 +170,13 @@ data "aws_iam_policy_document" "reviewer_callback" {
     actions   = ["dynamodb:PutItem"]
     resources = [aws_dynamodb_table.callback_idempotency.arn]
   }
+
+  statement {
+    sid       = "KMSDynamoDB"
+    effect    = "Allow"
+    actions   = ["kms:GenerateDataKey", "kms:Decrypt"]
+    resources = [aws_kms_key.dynamodb.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "reviewer_callback" {
@@ -183,6 +204,13 @@ data "aws_iam_policy_document" "status" {
     effect    = "Allow"
     actions   = ["dynamodb:GetItem"]
     resources = [aws_dynamodb_table.requests.arn]
+  }
+
+  statement {
+    sid       = "KMSDecrypt"
+    effect    = "Allow"
+    actions   = ["kms:Decrypt"]
+    resources = [aws_kms_key.dynamodb.arn]
   }
 }
 

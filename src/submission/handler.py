@@ -24,6 +24,40 @@ def _validate_body(body: dict) -> list:
     return [f"Missing required field: {f}" for f in REQUIRED_FIELDS if not body.get(f)]
 
 
+def _parse_fhir(body: dict) -> dict:
+    """Map a FHIR CoverageEligibilityRequest to the internal submission format."""
+    try:
+        patient_ref = body["patient"]["reference"]
+        provider_ref = body["provider"]["reference"]
+        item = body["item"][0]
+        diagnosis_code = (
+            item["diagnosis"][0]["diagnosisCodeableConcept"]["coding"][0]["code"]
+        )
+        procedure_code = item["productOrService"]["coding"][0]["code"]
+    except (KeyError, IndexError) as exc:
+        raise ValueError(f"Invalid FHIR CoverageEligibilityRequest: {exc}") from exc
+
+    # Strip resource-type prefix (e.g. "Patient/PAT-001" → "PAT-001")
+    patient_id = patient_ref.split("/", 1)[-1]
+    provider_id = provider_ref.split("/", 1)[-1]
+
+    parsed: dict = {
+        "patient_id": patient_id,
+        "provider_id": provider_id,
+        "diagnosis_code": diagnosis_code,
+        "procedure_code": procedure_code,
+    }
+
+    # In production, clinical notes would be de-identified before reaching the
+    # Claude API, or Anthropic's enterprise BAA would be in place.
+    for ext in body.get("extension", []):
+        if "valueString" in ext:
+            parsed["clinical_notes"] = ext["valueString"]
+            break
+
+    return parsed
+
+
 def handler(event: dict, context) -> dict:
     try:
         body_str = event.get("body") or "{}"
@@ -36,6 +70,16 @@ def handler(event: dict, context) -> dict:
             "headers": {"Content-Type": "application/json"},
             "body": json.dumps({"error": f"Invalid JSON body: {exc}"}),
         }
+
+    if body.get("resourceType") == "CoverageEligibilityRequest":
+        try:
+            body = _parse_fhir(body)
+        except ValueError as exc:
+            return {
+                "statusCode": 400,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({"error": str(exc)}),
+            }
 
     errors = _validate_body(body)
     if errors:

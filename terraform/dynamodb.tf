@@ -1,3 +1,18 @@
+resource "aws_kms_key" "dynamodb" {
+  description             = "CareFlow DynamoDB encryption key - protects PHI fields at rest"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+
+  tags = merge(local.common_tags, {
+    Name = "careflow-${var.environment}-dynamodb-key"
+  })
+}
+
+resource "aws_kms_alias" "dynamodb" {
+  name          = "alias/careflow-${var.environment}-dynamodb"
+  target_key_id = aws_kms_key.dynamodb.key_id
+}
+
 resource "aws_dynamodb_table" "requests" {
   name                        = "${local.name_prefix}-prior-auth-requests"
   billing_mode                = "PAY_PER_REQUEST"
@@ -25,6 +40,11 @@ resource "aws_dynamodb_table" "requests" {
     hash_key        = "final_decision"
     range_key       = "submitted_at"
     projection_type = "ALL"
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = aws_kms_key.dynamodb.arn
   }
 
   ttl {
