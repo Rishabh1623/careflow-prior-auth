@@ -44,6 +44,33 @@ A full evaluation — fetch, screen, evaluate, record — costs **$0.008865** in
 - IAM least privilege — each Lambda has its own role scoped to exactly its resources
 - DynamoDB requests table encrypted with a customer-managed KMS key (rotation enabled); callback-idempotency table uses AWS-managed encryption (no PHI)
 
+## Production Compliance Gap Analysis
+
+CareFlow's architecture satisfies the core regulatory requirements for AI in prior authorization — human oversight for uncertain decisions, full audit trail per decision, and least-privilege data access. The following table documents what's in place and what would be required before real PHI could flow through this system.
+
+### What CareFlow already satisfies
+
+| Requirement | How CareFlow addresses it |
+|---|---|
+| Human oversight mandate (CA SB 1120) | Confidence threshold routes uncertain AI decisions to human review — AI cannot make final coverage decisions autonomously |
+| Audit trail (HIPAA Security Rule) | Every decision logged in DynamoDB with decision, reasoning, reviewer ID, timestamp, and cost |
+| Minimum necessary access (HIPAA) | Each Lambda has its own IAM role scoped to exactly the resources it needs — no shared roles |
+| Prompt injection defense | Clinical notes screened before AI evaluation — flagged content bypasses AI entirely |
+| Duplicate resolution prevention | Atomic idempotency check prevents conflicting authorization records |
+| Encryption at rest | KMS customer-managed key on the prior-auth-requests DynamoDB table |
+
+### What's needed before real PHI can flow through this system
+
+| Gap | What's required | Effort |
+|---|---|---|
+| Business Associate Agreement | Anthropic enterprise BAA must be signed before clinical notes containing real PHI touch the Claude API | Low — paperwork, not engineering |
+| FIPS 140-3 encryption in transit | Standard TLS must be replaced with FIPS 140-3 validated cryptographic modules per 2025 HIPAA Security Rule amendments | Medium |
+| PHI de-identification option | Clinical notes should be de-identified before Claude API call, or BAA must be in place | Medium |
+| SOC 2 Type II audit | Third-party security audit required by most hospital procurement teams | High — months |
+| EHR integration | Real hospitals submit via HL7 FHIR from Epic/Cerner — FHIR input path is already supported, full EHR webhook integration is not | High |
+
+CareFlow already ships with `CoverageEligibilityRequest` input support in the submission Lambda. The architectural path from POC to production is compliance configuration and vendor agreements, not a fundamental redesign.
+
 ## Engineering Decisions
 
 ### Lambda Durable Functions vs Step Functions
