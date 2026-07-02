@@ -130,3 +130,181 @@ def test_clinical_notes_absent_when_not_provided():
 
     item = mock_table.put_item.call_args[1]["Item"]
     assert "clinical_notes" not in item
+
+
+# ── _parse_fhir unit tests ────────────────────────────────────────────────────
+
+FHIR_BODY = {
+    "resourceType": "CoverageEligibilityRequest",
+    "patient": {"reference": "Patient/PAT-001"},
+    "provider": {"reference": "Practitioner/PROV-001"},
+    "item": [{
+        "diagnosis": [{"diagnosisCodeableConcept": {"coding": [{"code": "J18.9"}]}}],
+        "productOrService": {"coding": [{"code": "99233"}]},
+    }],
+}
+
+FHIR_BODY_WITH_NOTES = {
+    **FHIR_BODY,
+    "extension": [{"url": "http://careflow.io/fhir/clinical-notes", "valueString": "Patient has persistent cough"}],
+}
+
+
+def test_parse_fhir_happy_path():
+    result = subm._parse_fhir(FHIR_BODY)
+    assert result == {
+        "patient_id": "PAT-001",
+        "provider_id": "PROV-001",
+        "diagnosis_code": "J18.9",
+        "procedure_code": "99233",
+    }
+
+
+def test_parse_fhir_with_clinical_notes():
+    result = subm._parse_fhir(FHIR_BODY_WITH_NOTES)
+    assert result["clinical_notes"] == "Patient has persistent cough"
+
+
+def test_parse_fhir_no_extension_omits_clinical_notes():
+    result = subm._parse_fhir(FHIR_BODY)
+    assert "clinical_notes" not in result
+
+
+def test_parse_fhir_strips_patient_prefix():
+    body = {**FHIR_BODY, "patient": {"reference": "Patient/PAT-XYZ"}}
+    assert subm._parse_fhir(body)["patient_id"] == "PAT-XYZ"
+
+
+def test_parse_fhir_strips_practitioner_prefix():
+    body = {**FHIR_BODY, "provider": {"reference": "Practitioner/PROV-XYZ"}}
+    assert subm._parse_fhir(body)["provider_id"] == "PROV-XYZ"
+
+
+def test_parse_fhir_strips_organization_prefix():
+    body = {**FHIR_BODY, "provider": {"reference": "Organization/ORG-001"}}
+    assert subm._parse_fhir(body)["provider_id"] == "ORG-001"
+
+
+def test_parse_fhir_bare_reference_no_prefix():
+    body = {**FHIR_BODY, "patient": {"reference": "PAT-BARE"}}
+    assert subm._parse_fhir(body)["patient_id"] == "PAT-BARE"
+
+
+def test_parse_fhir_picks_first_extension_with_value_string():
+    body = {
+        **FHIR_BODY,
+        "extension": [
+            {"url": "http://example.com/other", "valueCode": "ABC"},
+            {"url": "http://careflow.io/fhir/clinical-notes", "valueString": "First notes"},
+            {"url": "http://careflow.io/fhir/clinical-notes", "valueString": "Second notes"},
+        ],
+    }
+    assert subm._parse_fhir(body)["clinical_notes"] == "First notes"
+
+
+def test_parse_fhir_extension_without_value_string_skipped():
+    body = {
+        **FHIR_BODY,
+        "extension": [
+            {"url": "http://example.com/flag", "valueBoolean": True},
+        ],
+    }
+    result = subm._parse_fhir(body)
+    assert "clinical_notes" not in result
+
+
+def test_parse_fhir_missing_patient_raises_value_error():
+    body = {k: v for k, v in FHIR_BODY.items() if k != "patient"}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+def test_parse_fhir_missing_provider_raises_value_error():
+    body = {k: v for k, v in FHIR_BODY.items() if k != "provider"}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+def test_parse_fhir_empty_item_list_raises_value_error():
+    body = {**FHIR_BODY, "item": []}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+def test_parse_fhir_missing_diagnosis_raises_value_error():
+    item = {k: v for k, v in FHIR_BODY["item"][0].items() if k != "diagnosis"}
+    body = {**FHIR_BODY, "item": [item]}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+def test_parse_fhir_empty_diagnosis_list_raises_value_error():
+    item = {**FHIR_BODY["item"][0], "diagnosis": []}
+    body = {**FHIR_BODY, "item": [item]}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+def test_parse_fhir_missing_product_or_service_raises_value_error():
+    item = {k: v for k, v in FHIR_BODY["item"][0].items() if k != "productOrService"}
+    body = {**FHIR_BODY, "item": [item]}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+def test_parse_fhir_missing_procedure_code_raises_value_error():
+    item = {**FHIR_BODY["item"][0], "productOrService": {"coding": [{}]}}
+    body = {**FHIR_BODY, "item": [item]}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+def test_parse_fhir_missing_diagnosis_code_raises_value_error():
+    item = {
+        **FHIR_BODY["item"][0],
+        "diagnosis": [{"diagnosisCodeableConcept": {"coding": [{}]}}],
+    }
+    body = {**FHIR_BODY, "item": [item]}
+    import pytest
+    with pytest.raises(ValueError, match="CoverageEligibilityRequest"):
+        subm._parse_fhir(body)
+
+
+# ── handler FHIR integration ──────────────────────────────────────────────────
+
+def test_handler_accepts_fhir_body_and_writes_correct_item():
+    mock_ddb, mock_lambda, mock_table = _patched_aws()
+    with patch("boto3.resource", return_value=mock_ddb), \
+         patch("boto3.client", return_value=mock_lambda):
+        resp = subm.handler(_event(FHIR_BODY), None)
+
+    assert resp["statusCode"] == 202
+    item = mock_table.put_item.call_args[1]["Item"]
+    assert item["patient_id"] == "PAT-001"
+    assert item["provider_id"] == "PROV-001"
+    assert item["diagnosis_code"] == "J18.9"
+    assert item["procedure_code"] == "99233"
+
+
+def test_handler_fhir_with_notes_writes_clinical_notes():
+    mock_ddb, mock_lambda, mock_table = _patched_aws()
+    with patch("boto3.resource", return_value=mock_ddb), \
+         patch("boto3.client", return_value=mock_lambda):
+        subm.handler(_event(FHIR_BODY_WITH_NOTES), None)
+
+    item = mock_table.put_item.call_args[1]["Item"]
+    assert item["clinical_notes"] == "Patient has persistent cough"
+
+
+def test_handler_invalid_fhir_returns_400():
+    bad_fhir = {"resourceType": "CoverageEligibilityRequest", "item": []}
+    resp = subm.handler(_event(bad_fhir), None)
+    assert resp["statusCode"] == 400
+    assert "CoverageEligibilityRequest" in json.loads(resp["body"])["error"]
