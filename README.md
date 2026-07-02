@@ -74,11 +74,30 @@ A full evaluation — fetch, screen, evaluate, record — costs **$0.008865** in
 
 ### `POST /submit`
 
+Accepts two body formats — both return `202 { request_id, status }`.
+
+**Format A — raw JSON**
 ```json
 { "patient_id": "PAT-001", "provider_id": "PROV-001", "diagnosis_code": "J18.9", "procedure_code": "99233", "clinical_notes": "Optional" }
 ```
 
-Returns `202 { request_id, status }`. Errors: `400` on validation failure.
+**Format B — FHIR `CoverageEligibilityRequest`**
+```json
+{
+  "resourceType": "CoverageEligibilityRequest",
+  "patient":  { "reference": "Patient/PAT-001" },
+  "provider": { "reference": "Practitioner/PROV-001" },
+  "item": [{
+    "diagnosis":        [{ "diagnosisCodeableConcept": { "coding": [{ "code": "J18.9" }] } }],
+    "productOrService": { "coding": [{ "code": "99233" }] }
+  }],
+  "extension": [{ "url": "http://careflow.io/fhir/clinical-notes", "valueString": "Optional" }]
+}
+```
+
+Detection is automatic: presence of `"resourceType": "CoverageEligibilityRequest"` triggers FHIR parsing. The `Patient/` / `Practitioner/` / `Organization/` prefix is stripped from references automatically. Both formats follow the identical internal workflow after parsing.
+
+Errors: `400` on validation failure or malformed FHIR.
 
 ### `GET /status/{request_id}`
 
