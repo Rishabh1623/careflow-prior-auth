@@ -156,13 +156,6 @@ data "aws_iam_policy_document" "reviewer_callback" {
     ]
   }
 
-  statement {
-    sid       = "DynamoDBUpdate"
-    effect    = "Allow"
-    actions   = ["dynamodb:UpdateItem"]
-    resources = [aws_dynamodb_table.requests.arn]
-  }
-
   # Feature 4: Atomic idempotency check — claim callback_id before resolving
   statement {
     sid       = "IdempotencyTableWrite"

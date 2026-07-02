@@ -225,18 +225,6 @@
           <mxGeometry relative="1" x="0.3" y="-14" as="geometry"><mxPoint as="offset" /></mxGeometry>
         </mxCell>
 
-        <mxCell id="edge-reviewer-ddb-requests" edge="1" parent="aws-cloud" source="svc-group-reviewer-cb" target="svc-group-ddb-requests" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2E7D32;strokeWidth=2;fontFamily=Helvetica;labelBackgroundColor=none;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.9;entryDx=0;entryDy=0;" vertex="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="815" y="504" />
-              <mxPoint x="815" y="196" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="edge-reviewer-ddb-requests-lbl" connectable="0" parent="edge-reviewer-ddb-requests" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontFamily=Helvetica;labelBackgroundColor=none;" value="UpdateItem (review decision)" vertex="1">
-          <mxGeometry relative="1" x="0.6" y="-14" as="geometry"><mxPoint as="offset" /></mxGeometry>
-        </mxCell>
-
         <mxCell id="edge-status-ddb" edge="1" parent="aws-cloud" source="svc-group-status" target="svc-group-ddb-requests" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#2E7D32;strokeWidth=2;fontFamily=Helvetica;labelBackgroundColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" vertex="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
