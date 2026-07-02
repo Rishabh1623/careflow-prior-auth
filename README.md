@@ -51,12 +51,12 @@ A full evaluation — fetch, screen, evaluate, record — costs **$0.008865** in
 |---|---|---|
 | Code model | Pure Python, natural control flow | Amazon States Language (ASL) JSON/YAML |
 | Human-in-the-loop | Built-in `create_callback()` + `callback.result()` | `waitForTaskToken` pattern |
-| Compute cost during wait | **Zero** — Lambda exits while suspended | Standard Workflows bill per state transition (while waiting, transitions still accrue) |
+| Compute cost during wait | **Zero** — Lambda exits while suspended | Standard Workflows bill per state transition only (no duration charge, but execution stays open against the 1M open-execution account quota) |
 | Developer experience | All orchestration logic in one Python file | Separate state machine definition file |
 | Debugging | Single Lambda log group per execution | Visual console but separate execution model |
 | Execution duration | Configurable; **30 days** in this project (`execution_timeout=2592000`) | Up to 1 year (Standard) |
 
-**Chosen: Lambda Durable Functions.** The suspended orchestrator costs nothing while waiting for a human reviewer — which could be hours or days. Step Functions would bill for that entire wait.
+**Chosen: Lambda Durable Functions.** The suspended orchestrator costs nothing while waiting for a human reviewer — which could be hours or days. Step Functions Standard Workflows don't charge per duration either, but each step transition is billed and the execution stays open consuming the per-account open-execution quota.
 
 ### Claude API vs Amazon Bedrock
 
