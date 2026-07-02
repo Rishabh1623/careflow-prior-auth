@@ -51,7 +51,7 @@ A full evaluation — fetch, screen, evaluate, record — costs **$0.008865** in
 |---|---|---|
 | Code model | Pure Python, natural control flow | Amazon States Language (ASL) JSON/YAML |
 | Human-in-the-loop | Built-in `create_callback()` + `callback.result()` | `waitForTaskToken` pattern |
-| Compute cost during wait | **Zero** — Lambda exits while suspended | Standard Workflows bill per state transition + duration |
+| Compute cost during wait | **Zero** — Lambda exits while suspended | Standard Workflows bill per state transition (while waiting, transitions still accrue) |
 | Developer experience | All orchestration logic in one Python file | Separate state machine definition file |
 | Debugging | Single Lambda log group per execution | Visual console but separate execution model |
 | Execution duration | Configurable; **30 days** in this project (`execution_timeout=2592000`) | Up to 1 year (Standard) |
