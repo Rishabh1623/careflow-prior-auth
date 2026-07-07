@@ -1,6 +1,6 @@
 # CareFlow Demo Guide
 
-**Total recording time: ~5 minutes**  
+**Total recording time: ~4 minutes**  
 Follow each scene in order. `demo.sh` runs every command automatically — just press Enter to advance. Lines marked **SAY:** are your script.
 
 ---
