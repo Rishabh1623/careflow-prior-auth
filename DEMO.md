@@ -53,6 +53,10 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 > "When Claude escalates a case, the orchestrator calls create_callback(), sends the callback ID to the reviewer via SNS, and then suspends. The Lambda is not running. AWS saves a checkpoint. The reviewer could respond in 5 minutes or 5 days — the cost is identical: zero."
 >
 > "When the reviewer submits their decision, the orchestrator resumes in 530 milliseconds from the exact line it suspended on. That's what you'll see in the demo."
+>
+> "The fourth Lambda is the Reviewer Callback Lambda — it handles POST /review. The first thing it does is an atomic idempotency check: if a reviewer accidentally submits twice, the second call is silently dropped. A patient's record cannot be corrupted by a duplicate POST."
+>
+> "And the Status Lambda is a simple read-through — GET /status/{id} reads straight from DynamoDB. Reads never touch the write path."
 
 **Point out on the diagram:** KMS CMK on the DynamoDB PHI table, Secrets Manager holding the API key, and Claude API sitting outside the AWS boundary.
 
