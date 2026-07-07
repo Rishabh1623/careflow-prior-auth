@@ -40,6 +40,10 @@ GET /status/{request_id}  →  Status Lambda  →  DynamoDB read-through
 
 Four Lambdas handle distinct responsibilities: **Submission** (API entry + FHIR parsing), **Orchestrator** (AI evaluation + durable workflow), **Reviewer Callback** (human resolution), **Status** (read-through). DynamoDB holds request state with 90-day TTL; dual SNS topics fan out reviewer alerts and final decisions separately.
 
+## Demo
+
+See [`DEMO.md`](DEMO.md) for the full presenter script and [`demo-commands.sh`](demo-commands.sh) for the copy-paste commands.
+
 ## Engineering Decisions
 
 | Decision | Business reason |
