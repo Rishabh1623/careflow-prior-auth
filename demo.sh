@@ -138,20 +138,20 @@ pause
 banner "SCENE 2 — Auto-Approval: Routine Case"
 
 say "SCRIPT:"
-say "  \"Now let me show it live. I'll submit a routine case — community-acquired"
-say "  pneumonia, follow-up hospital observation. Clear diagnosis, standard procedure.\""
-say "  Watch how long this takes.\""
+say "  \"Now let me show it live. I'll submit a clear-cut surgical case — CT-confirmed"
+say "  acute appendicitis, immediate appendectomy. Imaging confirms it, labs confirm it,"
+say "  surgeon is recommending it. Watch how long this takes.\""
 
 echo ""
-label "Submitting: J18.9 (pneumonia) + 99233 (hospital observation)"
+label "Submitting: K35.80 (acute appendicitis) + 44950 (appendectomy)"
 SUBMIT_1=$(curl -s -X POST "$API_URL/submit" \
   -H "Content-Type: application/json" \
   -d '{
     "patient_id":     "PAT-001",
     "provider_id":    "PROV-001",
-    "diagnosis_code": "J18.9",
-    "procedure_code": "99233",
-    "clinical_notes": "Patient recovering from community-acquired pneumonia. Follow-up hospital observation required to monitor treatment response and ensure no complications."
+    "diagnosis_code": "K35.80",
+    "procedure_code": "44950",
+    "clinical_notes": "Patient presenting with acute appendicitis confirmed by CT scan showing periappendiceal fat stranding. WBC 14,000. Pain score 8/10 right lower quadrant. Surgeon recommends immediate appendectomy to prevent perforation."
   }')
 echo "$SUBMIT_1" | jq .
 REQUEST_ID_1=$(echo "$SUBMIT_1" | jq -r '.request_id')
@@ -165,8 +165,8 @@ pause
 label "Polling status..."
 poll_status "$REQUEST_ID_1"
 
-say "\"APPROVED. Under 30 seconds. Cost: \$0.008865 in AI inference.\""
-say "\"Point out: decision, claude_reasoning, policy_criteria_met, estimated_cost_usd.\""
+say "\"APPROVED. 97% confidence. Under 30 seconds. Cost: around a penny in AI inference.\""
+say "\"Point out: claude_reasoning lists 7 policy criteria met, estimated_cost_usd.\""
 say "\"Industry average for the same decision: \$11 to \$14 in staff time.\""
 
 pause
