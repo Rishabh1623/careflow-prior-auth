@@ -40,6 +40,21 @@ GET /status/{request_id}  →  Status Lambda  →  DynamoDB read-through
 
 Four Lambdas handle distinct responsibilities: **Submission** (API entry + FHIR parsing), **Orchestrator** (AI evaluation + durable workflow), **Reviewer Callback** (human resolution), **Status** (read-through). DynamoDB holds request state with 90-day TTL; dual SNS topics fan out reviewer alerts and final decisions separately.
 
+## Demo (~5 minutes)
+
+Run `./demo.sh` — press Enter to advance. All IDs captured automatically, nothing to copy-paste.
+
+| Scene | Timestamp | What you see |
+|---|---|---|
+| 1 — The Problem | 0:00 – 0:40 | GitHub README; problem statement |
+| 1.5 — Architecture Walkthrough | 0:40 – 1:20 | `architecture diagram.png`; all 4 Lambdas, KMS, Secrets Manager, Claude outside AWS boundary |
+| 2 — Auto-Approval | 1:20 – 2:40 | Routine pneumonia case approved in under 30 seconds |
+| 3 — Escalation + Human Review | 2:40 – 4:00 | MDD case escalated → orchestrator suspends → reviewer resolves → resumes in 530ms |
+| 3.5 — Why Durable Functions | 4:00 – 4:25 | Contrast with polling loop and Step Functions; zero-cost suspension explained |
+| 4 — Wrap Up | 4:25 – 5:05 | Results table; compliance posture; path to production |
+
+See [`DEMO.md`](DEMO.md) for the full presenter script.
+
 ## Engineering Decisions
 
 | Decision | Business reason |
