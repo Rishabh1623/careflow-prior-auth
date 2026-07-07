@@ -42,7 +42,7 @@ Four Lambdas handle distinct responsibilities: **Submission** (API entry + FHIR 
 
 ## Demo
 
-See [`DEMO.md`](DEMO.md) for the full presenter script with copy-paste commands.
+See [`DEMO.md`](DEMO.md) for the presenter script and commands.
 
 ## Engineering Decisions
 
