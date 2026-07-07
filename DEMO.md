@@ -1,7 +1,16 @@
 # CareFlow — Presenter Script
 
 **Total time: ~4 minutes**  
-Commands are in `demo-commands.sh` — copy-paste each block as you reach it.
+Copy-paste each command block as you reach it in the demo.
+
+---
+
+## Setup — run before recording
+
+```bash
+API_URL=$(terraform -chdir=terraform output -raw api_gateway_url)
+echo "API_URL = $API_URL"
+```
 
 ---
 
@@ -45,11 +54,24 @@ Commands are in `demo-commands.sh` — copy-paste each block as you reach it.
 
 ## Scene 2 — Async Submission (1:20 – 1:45)
 
-**Action:** Switch to the terminal. Run the **SCENE 2** block from `demo-commands.sh`.
+**Action:** Switch to the terminal.
 
 > "I'll submit a prior auth request for a patient with CT-confirmed acute appendicitis needing an immediate appendectomy. The imaging shows it, the labs confirm it, the surgeon is recommending it."
 
-*Paste and run the SCENE 2 block. The JSON response with the request ID prints immediately.*
+```bash
+SUBMIT_1=$(curl -s -X POST "$API_URL/submit" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patient_id":     "PAT-001",
+    "provider_id":    "PROV-001",
+    "diagnosis_code": "K35.80",
+    "procedure_code": "44950",
+    "clinical_notes": "Patient presenting with acute appendicitis confirmed by CT scan showing periappendiceal fat stranding. WBC 14,000. Pain score 8/10 right lower quadrant. Surgeon recommends immediate appendectomy to prevent perforation."
+  }')
+echo "$SUBMIT_1" | jq .
+REQUEST_ID_1=$(echo "$SUBMIT_1" | jq -r '.request_id')
+echo "REQUEST_ID_1 = $REQUEST_ID_1"
+```
 
 > "I get back a request ID immediately — the system is processing asynchronously in the background. This is the part where you'd normally wait 3 to 7 days. Let me show you what actually happens."
 
@@ -59,25 +81,61 @@ Commands are in `demo-commands.sh` — copy-paste each block as you reach it.
 
 > "Not every case is straightforward. Claude's confidence threshold is 90%. Below that it doesn't guess — it escalates to a human reviewer immediately. Let me show that path."
 
-**Action:** Run the **SCENE 3 — Submit** block from `demo-commands.sh`.
+**Submit the escalation case:**
 
-*Paste and run the SCENE 3 submit block. The 202 response with the second request ID prints.*
+```bash
+SUBMIT_2=$(curl -s -X POST "$API_URL/submit" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patient_id":     "PAT-002",
+    "provider_id":    "PROV-002",
+    "diagnosis_code": "F32.1",
+    "procedure_code": "90837",
+    "clinical_notes": "Patient presenting with moderate major depressive disorder. Requesting extended psychotherapy sessions. Previous treatments include medication management with partial response."
+  }')
+echo "$SUBMIT_2" | jq .
+REQUEST_ID_2=$(echo "$SUBMIT_2" | jq -r '.request_id')
+echo "REQUEST_ID_2 = $REQUEST_ID_2"
+```
 
 > "Same immediate response. Now I'll check the status after about 20 seconds."
 
-**Action:** Wait ~20 seconds, then run the **SCENE 3 — Check status** block.
+**Check status (run after ~20s):**
+
+```bash
+curl -s "$API_URL/status/$REQUEST_ID_2" | jq .
+```
 
 > "UNDER_REVIEW. The orchestrator evaluated this case, decided it needed human judgment, notified the reviewer via SNS, and then suspended itself at zero compute cost. It is not polling. It is not running. It costs nothing while it waits."
 
-**Action:** Run the **SCENE 3 — Capture callback ID** block.
+**Capture the callback ID:**
+
+```bash
+CALLBACK_ID=$(curl -s "$API_URL/status/$REQUEST_ID_2" | jq -r '.callback_id')
+echo "CALLBACK_ID = $CALLBACK_ID"
+```
 
 > "I'll now act as the reviewer and POST my decision."
 
-**Action:** Run the **SCENE 3 — Submit reviewer decision** block.
+**Submit the reviewer decision:**
+
+```bash
+curl -s -X POST "$API_URL/review/$CALLBACK_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "decision":    "approved",
+    "notes":       "Extended psychotherapy medically necessary given partial medication response. Meets clinical criteria for moderate MDD.",
+    "reviewer_id": "DR-001"
+  }' | jq .
+```
 
 > "The orchestrator just resumed — in 530 milliseconds. Let me pull the final record."
 
-**Action:** Run the **SCENE 3 — Final status** block.
+**Final status:**
+
+```bash
+curl -s "$API_URL/status/$REQUEST_ID_2" | jq .
+```
 
 > "APPROVED. The reviewer's notes, their ID, and the timestamp are all in the audit trail. Permanent record — satisfies HIPAA audit requirements out of the box."
 
