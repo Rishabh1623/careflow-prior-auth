@@ -43,7 +43,7 @@ LAST_STATUS_RESPONSE=""
 poll_status() {
   local request_id="$1"
   local attempts=0
-  local max=24   # 2 minutes max (24 × 5s)
+  local max=12   # 60 seconds max (12 × 5s)
   while [[ $attempts -lt $max ]]; do
     local response
     response=$(curl -s "$API_URL/status/$request_id")
@@ -58,7 +58,7 @@ poll_status() {
     sleep 5
     (( attempts++ ))
   done
-  printf "${YELLOW}  Timed out after 2 minutes.${RESET}\n"
+  printf "${YELLOW}  Lambda cold start — wait 10 more seconds and press Enter to retry.${RESET}\n"
   return 1
 }
 
