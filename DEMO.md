@@ -1,6 +1,6 @@
 # CareFlow Demo Guide
 
-**Total recording time: ~4 minutes**  
+**Total recording time: ~5 minutes**  
 Follow each scene in order. Commands are copy-paste ready. Lines marked **SAY:** are your script.
 
 ---
@@ -37,7 +37,28 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 
 ---
 
-## Scene 2 — Auto-Approval: Routine Case (0:40 – 2:00)
+## Scene 1.5 — Architecture Walkthrough (0:40 – 1:20)
+
+**Action:** Open `architecture diagram.png` (repo root) in your browser.
+
+> **SAY:**
+> "This is the full system architecture. Three entry points into API Gateway — submit, review, and status."
+>
+> "The Submission Lambda is the entry point — it accepts both raw JSON and FHIR CoverageEligibilityRequest format, which is the standard real hospitals use."
+>
+> "The Orchestrator is the core — this is a Lambda Durable Function, a new AWS primitive that launched in December 2025."
+>
+> "Unlike standard Lambda which dies after 15 minutes, a Durable Function can suspend itself completely at zero compute cost — no CPU, no memory, no billing — and resume exactly where it stopped, even days later."
+>
+> "When Claude escalates a case, the orchestrator calls create_callback(), sends the callback ID to the reviewer via SNS, and then suspends. The Lambda is not running. AWS saves a checkpoint. The reviewer could respond in 5 minutes or 5 days — the cost is identical: zero."
+>
+> "When the reviewer submits their decision, the orchestrator resumes in 530 milliseconds from the exact line it suspended on. That's what you'll see in the demo."
+
+**Point out on the diagram:** KMS CMK on the DynamoDB PHI table, Secrets Manager holding the API key, and Claude API sitting outside the AWS boundary.
+
+---
+
+## Scene 2 — Auto-Approval: Routine Case (1:20 – 2:40)
 
 **Action:** Switch to Terminal 1.
 
@@ -83,7 +104,7 @@ curl -s "$API_URL/status/<request_id>" | jq .
 
 ---
 
-## Scene 3 — Escalation: Human Review (2:00 – 3:20)
+## Scene 3 — Escalation: Human Review (2:40 – 4:00)
 
 > **SAY:**
 > "Now let me show the escalation path — what happens when the AI isn't confident enough
@@ -139,7 +160,22 @@ curl -s "$API_URL/status/<request_id>" | jq .
 
 ---
 
-## Scene 4 — Wrap Up (3:20 – 4:00)
+## Scene 3.5 — Why Lambda Durable Functions (4:00 – 4:25)
+
+**Action:** Stay on the terminal — the DynamoDB record from Scene 3 is already on screen.
+
+> **SAY:**
+> "Before Durable Functions existed, building human-in-the-loop on Lambda meant two bad options."
+>
+> "Option one: poll a database in a loop inside Lambda — hits the 15-minute wall immediately, and you're billed the entire wait."
+>
+> "Option two: Step Functions — works, but your workflow becomes a YAML state machine separate from your application code, you pay per state transition, and you've added another service boundary to reason about."
+>
+> "Durable Functions is a third model: write a single Python function, call callback.result(), and the Lambda checkpoints itself and disappears. Zero compute. Zero billing. When the reviewer responds, AWS resumes it from the exact line in under a second. You just saw that — 530 milliseconds. That primitive didn't exist before December 2025."
+
+---
+
+## Scene 4 — Wrap Up (4:25 – 5:05)
 
 **Action:** Switch back to the GitHub README in the browser. Point to the Results table.
 

@@ -79,57 +79,50 @@ printf "${GREEN}  Ready. Start recording, then press Enter.${RESET}\n"
 
 pause
 
-# ── scene 1 — architecture walkthrough ───────────────────────
-banner "SCENE 1 — Architecture Walkthrough"
+# ── scene 1 — the problem ────────────────────────────────────
+banner "SCENE 1 — The Problem"
 
-say "Open the architecture diagram in your browser (architecture diagram.png on GitHub)."
+say "ACTION: Show the GitHub README in the browser."
 say ""
-say "SCRIPT — walk the diagram left to right, top to bottom:"
+say "SCRIPT:"
+say "  \"This is CareFlow — a prior authorization engine I built to solve a real"
+say "  healthcare problem. Today, routine prior authorizations take 3 to 7 business"
+say "  days. One in four patients abandons their treatment while waiting. And for what?"
+say "  Most of these requests are straightforward. CareFlow decides routine cases in"
+say "  under 30 seconds using AI, and routes genuinely complex ones to a human reviewer"
+say "  immediately — not after three days in a fax queue. Let me show you how it works.\""
+
+pause
+
+# ── scene 1.5 — architecture walkthrough ─────────────────────
+banner "SCENE 1.5 — Architecture Walkthrough"
+
+say "ACTION: Open 'architecture diagram.png' in your browser (it's in the repo root)."
 say ""
-say "\"Let me start with the architecture so you can see how the pieces fit together.\""
+say "SCRIPT:"
+say "  \"This is the full system architecture. Three entry points into API Gateway"
+say "  — submit, review, and status.\""
 say ""
-say "ENTRY POINT:"
-say "  \"Everything starts at API Gateway — a single HTTP v2 endpoint. No custom"
-say "  infrastructure to manage, scales to zero, charges per request.\""
+say "  \"The Submission Lambda is the entry point — it accepts both raw JSON and FHIR"
+say "  CoverageEligibilityRequest format, which is the standard real hospitals use.\""
 say ""
-say "SUBMISSION LAMBDA:"
-say "  \"The Submission Lambda is the front door. It accepts two formats: raw JSON"
-say "  for simplicity in testing, and FHIR CoverageEligibilityRequest — the standard"
-say "  real hospital EHR systems already speak. It writes the request to DynamoDB"
-say "  and fires the orchestrator asynchronously. The caller gets a 202 immediately.\""
+say "  \"The Orchestrator is the core — this is a Lambda Durable Function, a new AWS"
+say "  primitive that launched in December 2025.\""
 say ""
-say "DYNAMODB:"
-say "  \"DynamoDB is the source of truth. Customer-managed KMS key with automatic"
-say "  rotation on the PHI table — that satisfies the 2025 HIPAA Security Rule."
-say "  90-day TTL, pay-per-request billing, a GSI for decision reporting.\""
+say "  \"Unlike standard Lambda which dies after 15 minutes, a Durable Function can"
+say "  suspend itself completely at zero compute cost — no CPU, no memory, no billing"
+say "  — and resume exactly where it stopped, even days later.\""
 say ""
-say "ORCHESTRATOR LAMBDA — THE BRAIN:"
-say "  \"The Orchestrator is where the intelligence lives. It's built on Lambda"
-say "  Durable Functions — think Step Functions, but the workflow is just Python."
-say "  Each step is checkpointed. If it crashes mid-run, it replays from the last"
-say "  checkpoint. And when it escalates to a human reviewer, it suspends completely"
-say "  — zero compute cost — for however long the reviewer takes. Could be hours, days.\""
+say "  \"When Claude escalates a case, the orchestrator calls create_callback(), sends"
+say "  the callback ID to the reviewer via SNS, and then suspends. The Lambda is not"
+say "  running. AWS saves a checkpoint. The reviewer could respond in 5 minutes or"
+say "  5 days — the cost is identical: zero.\""
 say ""
-say "CLAUDE AI — OUTSIDE THE AWS BOUNDARY:"
-say "  \"Claude sits outside the AWS boundary — that's intentional. We call the"
-say "  Anthropic API directly, not Bedrock, because it gives us same-day access to"
-say "  the latest models and lower per-token cost. The API key lives in Secrets Manager"
-say "  so there's no plaintext credential anywhere in the codebase or environment.\""
+say "  \"When the reviewer submits their decision, the orchestrator resumes in 530"
+say "  milliseconds from the exact line it suspended on. That's what you'll see in the demo.\""
 say ""
-say "SNS DUAL-TOPIC PATTERN:"
-say "  \"Two SNS topics — one for reviewer alerts when a case escalates, one for"
-say "  final decisions. Keeping them separate means downstream consumers only subscribe"
-say "  to what they care about. The billing system doesn't need escalation noise.\""
-say ""
-say "REVIEWER CALLBACK LAMBDA:"
-say "  \"When a human submits their decision, the Reviewer Callback Lambda handles it."
-say "  The first thing it does is an atomic idempotency check — if a reviewer"
-say "  accidentally submits twice, the second call is silently dropped. A patient's"
-say "  record can't be corrupted by a duplicate POST.\""
-say ""
-say "STATUS LAMBDA:"
-say "  \"Finally, a simple read-through Status Lambda — GET /status/{id} reads"
-say "  straight from DynamoDB. Clean separation: reads never touch the write path.\""
+say "  Point out: KMS CMK on the DynamoDB PHI table, Secrets Manager holding the API"
+say "  key, and Claude API sitting outside the AWS boundary."
 
 pause
 
@@ -235,6 +228,30 @@ curl -s "$API_URL/status/$REQUEST_ID_2" | jq .
 
 say "\"APPROVED. Reviewer's notes, their ID, and the timestamp are all in the audit trail."
 say " Permanent record — satisfies HIPAA audit requirements out of the box.\""
+
+pause
+
+# ── scene 3.5 — why lambda durable functions ─────────────────
+banner "SCENE 3.5 — Why Lambda Durable Functions"
+
+say "ACTION: Stay on terminal. The DynamoDB record you just pulled is already on screen."
+say ""
+say "SCRIPT:"
+say "  \"Before Durable Functions existed, building human-in-the-loop on Lambda meant"
+say "  two bad options.\""
+say ""
+say "  \"Option one: poll a database in a loop inside Lambda — hits the 15-minute wall"
+say "  immediately, and you're billed the entire wait.\""
+say ""
+say "  \"Option two: Step Functions — works, but your workflow becomes a YAML state"
+say "  machine separate from your application code, you pay per state transition, and"
+say "  you've added another service boundary to reason about.\""
+say ""
+say "  \"Durable Functions is a third model: write a single Python function, call"
+say "  callback.result(), and the Lambda checkpoints itself and disappears. Zero compute."
+say "  Zero billing. When the reviewer responds, AWS resumes it from the exact line in"
+say "  under a second. You just saw that — 530 milliseconds. That primitive didn't"
+say "  exist before December 2025.\""
 
 pause
 
