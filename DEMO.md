@@ -67,9 +67,9 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 **Action:** Switch to the terminal running `demo.sh`. Press Enter to submit.
 
 > **SAY:**
-> "I'll submit a prior auth request for a patient with community-acquired pneumonia
-> needing a follow-up hospital visit. This is a routine case — clear diagnosis,
-> standard procedure. Watch how fast this resolves."
+> "I'll submit a prior auth request for a patient with CT-confirmed acute appendicitis
+> needing an immediate appendectomy. The imaging shows it, the labs confirm it,
+> the surgeon is recommending it. Watch how fast this resolves."
 
 *`demo.sh` submits the request and prints the JSON response with the request ID.*
 
@@ -80,13 +80,13 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 *Press Enter. `demo.sh` polls automatically every 5 seconds until status leaves PENDING.*
 
 > **SAY:**
-> "There it is — APPROVED. Claude reviewed the clinical criteria, confirmed medical necessity,
-> and made a decision. Total time: under 30 seconds. Industry average: 3 to 7 days.
-> The cost for that AI inference call was less than one cent — $0.008865 to be exact,
+> "There it is — APPROVED at 97% confidence. Claude reviewed the clinical criteria,
+> confirmed medical necessity, and made a decision. Total time: under 30 seconds.
+> Industry average: 3 to 7 days. The cost for that AI inference call was around one cent,
 > versus $11 to $14 in staff time for the same decision."
 
 **Point to the response fields as you speak:**
-> "You can see Claude's full reasoning, which policy criteria were met, confidence score,
+> "You can see Claude's full reasoning, seven policy criteria met, the confidence score,
 > and the exact token cost — all stored in DynamoDB with a 90-day audit trail."
 
 ---
