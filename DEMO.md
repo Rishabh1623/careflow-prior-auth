@@ -1,7 +1,7 @@
 # CareFlow Demo Guide
 
 **Total recording time: ~5 minutes**  
-Follow each scene in order. Commands are copy-paste ready. Lines marked **SAY:** are your script.
+Follow each scene in order. `demo.sh` runs every command automatically — just press Enter to advance. Lines marked **SAY:** are your script.
 
 ---
 
@@ -60,37 +60,20 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 
 ## Scene 2 — Auto-Approval: Routine Case (1:20 – 2:40)
 
-**Action:** Switch to Terminal 1.
+**Action:** Switch to the terminal running `demo.sh`. Press Enter to submit.
 
 > **SAY:**
 > "I'll submit a prior auth request for a patient with community-acquired pneumonia
 > needing a follow-up hospital visit. This is a routine case — clear diagnosis,
 > standard procedure. Watch how fast this resolves."
 
-**Run in Terminal 1:**
-```bash
-curl -s -X POST "$API_URL/submit" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "patient_id": "PAT-001",
-    "provider_id": "PROV-001",
-    "diagnosis_code": "J18.9",
-    "procedure_code": "99233",
-    "clinical_notes": "Patient recovering from community-acquired pneumonia. Follow-up hospital observation required to monitor treatment response and ensure no complications."
-  }' | jq .
-```
+*`demo.sh` submits the request and prints the JSON response with the request ID.*
 
 > **SAY:**
 > "I get back a request ID immediately — the system is processing asynchronously.
 > Now I'll poll the status. This is the part where you'd normally wait days."
 
-**Copy the `request_id` from the response. Run in Terminal 2:**
-```bash
-# Replace <request_id> with the value from above
-curl -s "$API_URL/status/<request_id>" | jq .
-```
-
-*Wait 20–30 seconds, then run the status check again.*
+*Press Enter. `demo.sh` polls automatically every 5 seconds until status leaves PENDING.*
 
 > **SAY:**
 > "There it is — APPROVED. Claude reviewed the clinical criteria, confirmed medical necessity,
@@ -111,24 +94,7 @@ curl -s "$API_URL/status/<request_id>" | jq .
 > to decide on its own. Claude's confidence threshold is 90%. Below that, it escalates
 > to a human reviewer automatically. No exceptions in code."
 
-**Run in Terminal 1:**
-```bash
-curl -s -X POST "$API_URL/submit" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "patient_id": "PAT-002",
-    "provider_id": "PROV-002",
-    "diagnosis_code": "F32.1",
-    "procedure_code": "90837",
-    "clinical_notes": "Patient presenting with moderate major depressive disorder. Requesting extended psychotherapy sessions. Previous treatments include medication management with partial response."
-  }' | jq .
-```
-
-*Wait 20–30 seconds, then check status.*
-
-```bash
-curl -s "$API_URL/status/<request_id>" | jq .
-```
+*Press Enter. `demo.sh` submits the escalation case and polls for status.*
 
 > **SAY:**
 > "Status is UNDER_REVIEW. The orchestrator evaluated the request, determined it needed
@@ -136,22 +102,9 @@ curl -s "$API_URL/status/<request_id>" | jq .
 > not running, not burning money. It's just waiting. A reviewer gets an SNS notification
 > with the case details and a callback URL. Let me resolve it now as the reviewer."
 
-**Copy the `callback_id` from the status response. Run:**
-```bash
-curl -s -X POST "$API_URL/review/<callback_id>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "decision": "approved",
-    "notes": "Extended psychotherapy medically necessary given partial medication response. Meets clinical criteria for moderate MDD.",
-    "reviewer_id": "DR-001"
-  }' | jq .
-```
+*Press Enter. `demo.sh` submits the reviewer decision using the captured callback ID.*
 
-*Check status one more time.*
-
-```bash
-curl -s "$API_URL/status/<request_id>" | jq .
-```
+*Press Enter. `demo.sh` pulls the final status.*
 
 > **SAY:**
 > "APPROVED — resolved with the reviewer's notes, their ID, and a full timestamp attached.
@@ -197,25 +150,17 @@ curl -s "$API_URL/status/<request_id>" | jq .
 
 ---
 
-## Quick Reference — All Commands
+## Quick Reference
 
 ```bash
-# Set URL (run once before recording)
-export API_URL=$(cd terraform && terraform output -raw api_gateway_url)
+# One-time setup
+chmod +x demo.sh
 
-# Submit a request
-curl -s -X POST "$API_URL/submit" \
-  -H "Content-Type: application/json" \
-  -d '{"patient_id":"PAT-001","provider_id":"PROV-001","diagnosis_code":"J18.9","procedure_code":"99233"}' | jq .
-
-# Check status
-curl -s "$API_URL/status/<request_id>" | jq .
-
-# Resolve human review
-curl -s -X POST "$API_URL/review/<callback_id>" \
-  -H "Content-Type: application/json" \
-  -d '{"decision":"approved","notes":"Medically necessary","reviewer_id":"DR-001"}' | jq .
+# Run the demo — press Enter at each prompt to advance
+./demo.sh
 ```
+
+`demo.sh` fetches the API URL from Terraform, submits all requests, captures IDs, polls status, and resolves the reviewer callback automatically. No copy-paste required at any point.
 
 ---
 
