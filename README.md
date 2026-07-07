@@ -50,8 +50,8 @@ Run `./demo.sh` — press Enter to advance. All IDs captured automatically, noth
 | 1.5 — Architecture Walkthrough | 0:40 – 1:20 | `architecture diagram.png`; all 4 Lambdas, KMS, Secrets Manager, Claude outside AWS boundary |
 | 2 — Async Submission | 1:20 – 1:45 | Appendicitis case submitted; 202 + request ID returned immediately |
 | 3 — Escalation + Human Review | 1:45 – 3:05 | MDD case escalated → orchestrator suspends → reviewer resolves → resumes in 530ms |
-| 3.5 — Why Durable Functions | 4:00 – 4:25 | Contrast with polling loop and Step Functions; zero-cost suspension explained |
-| 4 — Wrap Up | 4:25 – 5:05 | Results table; compliance posture; path to production |
+| 3.5 — Why Durable Functions | 3:05 – 3:30 | Contrast with polling loop and Step Functions; zero-cost suspension explained |
+| 4 — Wrap Up | 3:30 – 4:10 | Results table; compliance posture; path to production |
 
 See [`DEMO.md`](DEMO.md) for the full presenter script.
 
