@@ -62,32 +62,21 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 
 ---
 
-## Scene 2 — Auto-Approval: Routine Case (1:20 – 2:40)
+## Scene 2 — Async Submission (1:20 – 1:45)
 
 **Action:** Switch to the terminal running `demo.sh`. Press Enter to submit.
 
 > **SAY:**
 > "I'll submit a prior auth request for a patient with CT-confirmed acute appendicitis
 > needing an immediate appendectomy. The imaging shows it, the labs confirm it,
-> the surgeon is recommending it. Watch how fast this resolves."
+> the surgeon is recommending it."
 
 *`demo.sh` submits the request and prints the JSON response with the request ID.*
 
 > **SAY:**
 > "I get back a request ID immediately — the system is processing asynchronously.
-> Now I'll poll the status. This is the part where you'd normally wait days."
-
-*Press Enter. `demo.sh` polls automatically every 5 seconds until status leaves PENDING.*
-
-> **SAY:**
-> "There it is — APPROVED at 97% confidence. Claude reviewed the clinical criteria,
-> confirmed medical necessity, and made a decision. Total time: under 30 seconds.
-> Industry average: 3 to 7 days. The cost for that AI inference call was around one cent,
-> versus $11 to $14 in staff time for the same decision."
-
-**Point to the response fields as you speak:**
-> "You can see Claude's full reasoning, seven policy criteria met, the confidence score,
-> and the exact token cost — all stored in DynamoDB with a 90-day audit trail."
+> This is the part where you'd normally wait 3 to 7 days. Let me show you what
+> actually happens next."
 
 ---
 
@@ -173,5 +162,5 @@ chmod +x demo.sh
 - Use a dark terminal theme — easier to read on video
 - Increase font size to at least 16pt before recording
 - `jq .` is already in every command — output will be formatted and colored
-- If status still shows `PENDING` after 30s, wait 10 more seconds and re-run — Lambda cold starts can add a few seconds
+- If the escalation case still shows `PENDING` after 60s, wait 10 more seconds and press Enter to retry — Lambda cold starts can add a few seconds
 - For the escalation scene, `F32.1 + 90837` reliably triggers escalation, but if it auto-approves, try `Z79.899 + 27447` (experimental implant for complex comorbidities)

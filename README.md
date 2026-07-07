@@ -48,8 +48,8 @@ Run `./demo.sh` — press Enter to advance. All IDs captured automatically, noth
 |---|---|---|
 | 1 — The Problem | 0:00 – 0:40 | GitHub README; problem statement |
 | 1.5 — Architecture Walkthrough | 0:40 – 1:20 | `architecture diagram.png`; all 4 Lambdas, KMS, Secrets Manager, Claude outside AWS boundary |
-| 2 — Auto-Approval | 1:20 – 2:40 | Routine pneumonia case approved in under 30 seconds |
-| 3 — Escalation + Human Review | 2:40 – 4:00 | MDD case escalated → orchestrator suspends → reviewer resolves → resumes in 530ms |
+| 2 — Async Submission | 1:20 – 1:45 | Appendicitis case submitted; 202 + request ID returned immediately |
+| 3 — Escalation + Human Review | 1:45 – 3:05 | MDD case escalated → orchestrator suspends → reviewer resolves → resumes in 530ms |
 | 3.5 — Why Durable Functions | 4:00 – 4:25 | Contrast with polling loop and Step Functions; zero-cost suspension explained |
 | 4 — Wrap Up | 4:25 – 5:05 | Results table; compliance posture; path to production |
 
