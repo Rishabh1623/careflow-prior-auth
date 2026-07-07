@@ -53,6 +53,8 @@ def handler(event: dict, context) -> dict:
         body["ai_decision"] = item["claude_decision"]
     if item.get("claude_confidence"):
         body["ai_confidence"] = item["claude_confidence"]
+    if item.get("callback_id"):
+        body["callback_id"] = item["callback_id"]
     if item.get("submitted_at"):
         body["submitted_at"] = item["submitted_at"]
     if status in RESOLVED_STATUSES and item.get("updated_at"):
