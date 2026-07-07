@@ -80,7 +80,7 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 
 ---
 
-## Scene 3 — Escalation: Human Review (2:40 – 4:00)
+## Scene 3 — Escalation: Human Review (1:45 – 3:05)
 
 > **SAY:**
 > "Now let me show the escalation path — what happens when the AI isn't confident enough
@@ -106,7 +106,7 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 
 ---
 
-## Scene 3.5 — Why Lambda Durable Functions (4:00 – 4:25)
+## Scene 3.5 — Why Lambda Durable Functions (3:05 – 3:30)
 
 **Action:** Stay on the terminal — the DynamoDB record from Scene 3 is already on screen.
 
@@ -121,7 +121,7 @@ Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Requ
 
 ---
 
-## Scene 4 — Wrap Up (4:25 – 5:05)
+## Scene 4 — Wrap Up (3:30 – 4:10)
 
 **Action:** Switch back to the GitHub README in the browser. Point to the Results table.
 
