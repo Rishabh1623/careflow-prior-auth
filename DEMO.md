@@ -7,17 +7,19 @@ Follow each scene in order. Commands are copy-paste ready. Lines marked **SAY:**
 
 ## Before You Start Recording
 
-Run these once — do not record this part.
-
 ```bash
-# Get your live API URL
-cd terraform
-export API_URL=$(terraform output -raw api_gateway_url)
-echo $API_URL   # confirm it printed a URL
+chmod +x demo.sh   # one time only
 ```
 
-Open two terminal windows side by side — one to submit requests, one to poll status.  
-Have the README open on GitHub in a browser tab.
+Open the GitHub README in a browser tab. That's all — `demo.sh` handles everything else.
+
+## Running the Demo
+
+```bash
+./demo.sh
+```
+
+Press **Enter** at each `▶ Press Enter to continue...` prompt to advance. Request IDs and callback IDs are captured automatically — nothing to copy-paste mid-recording.
 
 ---
 
