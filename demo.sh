@@ -158,16 +158,7 @@ REQUEST_ID_1=$(echo "$SUBMIT_1" | jq -r '.request_id')
 printf "${GREEN}  ✓ request_id captured${RESET}\n"
 
 say "\"I get back a request ID immediately — processing is async.\""
-say "\"Normally you'd wait 3 to 7 days. Watch this.\""
-
-pause
-
-label "Polling status..."
-poll_status "$REQUEST_ID_1"
-
-say "\"APPROVED. 97% confidence. Under 30 seconds. Cost: around a penny in AI inference.\""
-say "\"Point out: claude_reasoning lists 7 policy criteria met, estimated_cost_usd.\""
-say "\"Industry average for the same decision: \$11 to \$14 in staff time.\""
+say "\"Normally you'd wait 3 to 7 days. Watch the escalation path next.\""
 
 pause
 
